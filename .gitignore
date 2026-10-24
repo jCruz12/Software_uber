@@ -1,0 +1,17 @@
+# Dependencias
+node_modules/
+.pnpm-store/
+
+# Entorno y Secretos
+.env
+.env.local
+.env.production
+
+# Compilados de Next.js
+frontend/.next/
+frontend/out/
+
+# Logs y Cache
+npm-debug.log*
+yarn-debug.log*
+.DS_Store
