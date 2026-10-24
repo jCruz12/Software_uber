@@ -1,13 +1,15 @@
+'use client';
+
 import React, { useState } from 'react';
 
-// Carga inicial de empleadores desde 'Datos Principales.xlsx'
+// Carga inicial de empleadores
 const EMPLOYERS = [
   { id: '1', name: 'Luis Jorge Gama Maldonado', address: 'Jahnstr. 20, 68535 – Edingen Neckarhausen' },
   { id: '2', name: 'YottaHWattH RNK', address: 'Jahnstr. 20, 68535 – Edingen Neckarhausen' },
   { id: '3', name: 'YottaHWattH HD2', address: 'Wangerowstraße 14, 69115 Heidelberg' },
 ];
 
-// Carga inicial de los 23 empleados extraídos de 'Datos Principales.xlsx'
+// Carga inicial de los 23 empleados
 const INITIAL_EMPLOYEES = [
   { id: '1', lastName: 'Gogigieni', firstName: 'Prateek', status: 'Inactivo', contractType: 'Minijob', startDate: '', birthDate: '1992-08-12', krankenkasse: 'BKK PwC', stNummer: '69 721 403 562', svNummer: '24-120892-G-029', address: 'LuisenStr. 44', zipCode: '63067', city: 'Offenbach an Main' },
   { id: '2', lastName: 'Rosario Trinidad', firstName: 'Juan Jose', status: 'Activo', contractType: '1/2 Tiempo', startDate: '', birthDate: '1981-07-02', krankenkasse: 'AOK Baden Württemberg', stNummer: '', svNummer: '', address: '', zipCode: '', city: '' },
@@ -24,9 +26,8 @@ export default function Dashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('TODOS');
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [activeTab, setActiveTab] = useState('CONTRATO'); // 'CONTRATO', 'INSTRUCCIONES', 'EFECTIVO', 'HORAS'
+  const [activeTab, setActiveTab] = useState('CONTRATO');
 
-  // Filtrado de empleados
   const filteredEmployees = INITIAL_EMPLOYEES.filter(emp => {
     const matchesSearch = `${emp.firstName} ${emp.lastName} ${emp.city}`.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'TODOS' || emp.status === statusFilter;
@@ -35,7 +36,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[#F6F6F6] text-black font-sans">
-      {/* Barra de Navegación Estilo Uber */}
       <nav className="bg-black text-white px-8 py-4 flex justify-between items-center shadow-md">
         <div className="flex items-center gap-6">
           <span className="text-2xl font-bold tracking-tighter">Uber<span className="font-light text-gray-400">Portal</span></span>
@@ -44,7 +44,6 @@ export default function Dashboard() {
           </span>
         </div>
         
-        {/* Selector de Empleador */}
         <div className="flex items-center gap-3">
           <label className="text-xs text-gray-400">Empleador Activo:</label>
           <select 
@@ -60,7 +59,6 @@ export default function Dashboard() {
       </nav>
 
       <main className="max-w-7xl mx-auto px-6 py-8">
-        {/* Métrica de Empleados */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
             <p className="text-xs font-semibold uppercase text-gray-400 tracking-wider">Total Empleados</p>
@@ -86,7 +84,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Búsqueda y Filtros */}
         <div className="bg-white rounded-2xl border border-gray-200 p-4 mb-6 flex flex-col md:flex-row gap-4 justify-between items-center shadow-sm">
           <input
             type="text"
@@ -111,7 +108,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Tabla de Empleados */}
         <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm mb-12">
           <table className="w-full text-left text-sm">
             <thead className="bg-gray-50 border-b border-gray-100 text-xs text-gray-400 uppercase tracking-wider">
@@ -156,7 +152,6 @@ export default function Dashboard() {
           </table>
         </div>
 
-        {/* Modal / Vista de Documentos Generados para el Empleado Seleccionado */}
         {selectedEmployee && (
           <div className="bg-white border border-gray-300 rounded-2xl p-6 shadow-xl mb-12">
             <div className="flex justify-between items-center border-b pb-4 mb-6">
@@ -172,7 +167,6 @@ export default function Dashboard() {
               </button>
             </div>
 
-            {/* Pestañas de Documentos Adjuntos */}
             <div className="flex border-b border-gray-200 mb-6 gap-6 text-sm font-semibold">
               <button 
                 onClick={() => setActiveTab('CONTRATO')} 
@@ -200,7 +194,6 @@ export default function Dashboard() {
               </button>
             </div>
 
-            {/* Contenido según pestaña */}
             <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 text-xs font-mono text-gray-800 leading-relaxed overflow-x-auto">
               {activeTab === 'CONTRATO' && (
                 <div>
