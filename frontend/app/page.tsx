@@ -2,14 +2,14 @@
 
 import React, { useState } from 'react';
 
-// Carga inicial de empleadores
+// Empleadores oficiales extraídos de 'Datos Principales.xlsx'
 const EMPLOYERS = [
   { id: '1', name: 'Luis Jorge Gama Maldonado', address: 'Jahnstr. 20, 68535 – Edingen Neckarhausen' },
   { id: '2', name: 'YottaHWattH RNK', address: 'Jahnstr. 20, 68535 – Edingen Neckarhausen' },
   { id: '3', name: 'YottaHWattH HD2', address: 'Wangerowstraße 14, 69115 Heidelberg' },
 ];
 
-// Carga inicial de los 23 empleados
+// Lista de empleados con datos reales
 const INITIAL_EMPLOYEES = [
   { id: '1', lastName: 'Gogigieni', firstName: 'Prateek', status: 'Inactivo', contractType: 'Minijob', startDate: '', birthDate: '1992-08-12', krankenkasse: 'BKK PwC', stNummer: '69 721 403 562', svNummer: '24-120892-G-029', address: 'LuisenStr. 44', zipCode: '63067', city: 'Offenbach an Main' },
   { id: '2', lastName: 'Rosario Trinidad', firstName: 'Juan Jose', status: 'Activo', contractType: '1/2 Tiempo', startDate: '', birthDate: '1981-07-02', krankenkasse: 'AOK Baden Württemberg', stNummer: '', svNummer: '', address: '', zipCode: '', city: '' },
@@ -35,71 +35,77 @@ export default function Dashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-[#F6F6F6] text-black font-sans">
-      <nav className="bg-black text-white px-8 py-4 flex justify-between items-center shadow-md">
-        <div className="flex items-center gap-6">
-          <span className="text-2xl font-bold tracking-tighter">Uber<span className="font-light text-gray-400">Portal</span></span>
-          <span className="text-xs bg-gray-800 text-gray-300 px-3 py-1 rounded-full border border-gray-700">
-            Gestión de Personal & Contratos
+    <div className="min-h-screen bg-[#F3F3F3] text-zinc-900 font-sans selection:bg-black selection:text-white">
+      {/* Barra de Navegación Estilo Uber High-Contrast */}
+      <nav className="bg-black text-white px-8 py-4 flex flex-col sm:flex-row justify-between items-center gap-4 sticky top-0 z-50 shadow-xl border-b border-zinc-800">
+        <div className="flex items-center gap-4">
+          <span className="text-2xl font-black tracking-tighter">Uber<span className="font-light text-zinc-400">Portal</span></span>
+          <span className="text-[11px] uppercase tracking-wider bg-zinc-900 text-zinc-300 px-3 py-1 rounded-full border border-zinc-700 font-semibold">
+            Fleet & Contract Management
           </span>
         </div>
         
-        <div className="flex items-center gap-3">
-          <label className="text-xs text-gray-400">Empleador Activo:</label>
+        {/* Selector de Empleador */}
+        <div className="flex items-center gap-3 bg-zinc-900/90 px-4 py-2 rounded-xl border border-zinc-800">
+          <label className="text-xs text-zinc-400 font-medium">Empleador:</label>
           <select 
             value={selectedEmployer.id}
             onChange={(e) => setSelectedEmployer(EMPLOYERS.find(emp => emp.id === e.target.value) || EMPLOYERS[0])}
-            className="bg-gray-900 text-white text-xs px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:border-white"
+            className="bg-transparent text-white text-xs font-semibold focus:outline-none cursor-pointer"
           >
             {EMPLOYERS.map(emp => (
-              <option key={emp.id} value={emp.id}>{emp.name}</option>
+              <option key={emp.id} value={emp.id} className="bg-zinc-900 text-white">
+                {emp.name}
+              </option>
             ))}
           </select>
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
-            <p className="text-xs font-semibold uppercase text-gray-400 tracking-wider">Total Empleados</p>
-            <p className="text-3xl font-extrabold mt-2">{INITIAL_EMPLOYEES.length}</p>
+      <main className="max-w-7xl mx-auto px-6 py-10">
+        {/* Panel de Métricas */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white p-6 rounded-2xl border border-zinc-200/80 shadow-sm hover:shadow-md transition-shadow">
+            <p className="text-xs font-bold uppercase text-zinc-400 tracking-wider">Total Empleados</p>
+            <p className="text-4xl font-black mt-2 text-zinc-900">{INITIAL_EMPLOYEES.length}</p>
           </div>
-          <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
-            <p className="text-xs font-semibold uppercase text-gray-400 tracking-wider">Activos</p>
-            <p className="text-3xl font-extrabold mt-2 text-emerald-600">
+          <div className="bg-white p-6 rounded-2xl border border-zinc-200/80 shadow-sm hover:shadow-md transition-shadow">
+            <p className="text-xs font-bold uppercase text-zinc-400 tracking-wider">Activos</p>
+            <p className="text-4xl font-black mt-2 text-emerald-600">
               {INITIAL_EMPLOYEES.filter(e => e.status === 'Activo').length}
             </p>
           </div>
-          <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
-            <p className="text-xs font-semibold uppercase text-gray-400 tracking-wider">Minijob</p>
-            <p className="text-3xl font-extrabold mt-2 text-blue-600">
+          <div className="bg-white p-6 rounded-2xl border border-zinc-200/80 shadow-sm hover:shadow-md transition-shadow">
+            <p className="text-xs font-bold uppercase text-zinc-400 tracking-wider">Minijob</p>
+            <p className="text-4xl font-black mt-2 text-blue-600">
               {INITIAL_EMPLOYEES.filter(e => e.contractType === 'Minijob').length}
             </p>
           </div>
-          <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
-            <p className="text-xs font-semibold uppercase text-gray-400 tracking-wider">1/2 Tiempo (Teilzeit)</p>
-            <p className="text-3xl font-extrabold mt-2 text-purple-600">
+          <div className="bg-white p-6 rounded-2xl border border-zinc-200/80 shadow-sm hover:shadow-md transition-shadow">
+            <p className="text-xs font-bold uppercase text-zinc-400 tracking-wider">1/2 Tiempo (Teilzeit)</p>
+            <p className="text-4xl font-black mt-2 text-purple-600">
               {INITIAL_EMPLOYEES.filter(e => e.contractType === '1/2 Tiempo').length}
             </p>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 p-4 mb-6 flex flex-col md:flex-row gap-4 justify-between items-center shadow-sm">
+        {/* Barra de Búsqueda y Filtros */}
+        <div className="bg-white rounded-2xl border border-zinc-200/80 p-4 mb-6 flex flex-col md:flex-row gap-4 justify-between items-center shadow-sm">
           <input
             type="text"
             placeholder="Buscar por nombre, apellido o ciudad..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full md:w-80 bg-gray-100 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-black transition-all"
+            className="w-full md:w-96 bg-zinc-100/80 rounded-xl px-4 py-3 text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-black transition-all"
           />
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 w-full md:w-auto">
             {['TODOS', 'Activo', 'Inactivo'].map(st => (
               <button
                 key={st}
                 onClick={() => setStatusFilter(st)}
-                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-                  statusFilter === st ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                className={`flex-1 md:flex-none px-5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  statusFilter === st ? 'bg-black text-white shadow-md' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
                 }`}
               >
                 {st === 'TODOS' ? 'Todos' : st}
@@ -108,141 +114,148 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm mb-12">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-gray-50 border-b border-gray-100 text-xs text-gray-400 uppercase tracking-wider">
-              <tr>
-                <th className="px-6 py-4">Empleado</th>
-                <th className="px-6 py-4">Estado</th>
-                <th className="px-6 py-4">Tipo Contrato</th>
-                <th className="px-6 py-4">1er Día</th>
-                <th className="px-6 py-4">Ciudad / Krankenkasse</th>
-                <th className="px-6 py-4 text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filteredEmployees.map(emp => (
-                <tr key={emp.id} className="hover:bg-gray-50/80 transition-colors">
-                  <td className="px-6 py-4 font-semibold text-gray-900">
-                    {emp.lastName}, {emp.firstName}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                      emp.status === 'Activo' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-500'
-                    }`}>
-                      {emp.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-gray-700 font-medium">{emp.contractType}</td>
-                  <td className="px-6 py-4 text-gray-500">{emp.startDate || 'Sin asignar'}</td>
-                  <td className="px-6 py-4 text-gray-500">
-                    {emp.city ? `${emp.city} (${emp.krankenkasse})` : 'Sin registro'}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => setSelectedEmployee(emp)}
-                      className="bg-black text-white text-xs px-4 py-2 rounded-lg font-medium hover:bg-gray-800 transition-all"
-                    >
-                      Gestionar Documentos
-                    </button>
-                  </td>
+        {/* Tabla Principal de Empleados */}
+        <div className="bg-white rounded-2xl border border-zinc-200/80 overflow-hidden shadow-sm mb-10">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-zinc-50 border-b border-zinc-200 text-xs text-zinc-400 uppercase tracking-wider font-semibold">
+                <tr>
+                  <th className="px-6 py-4">Empleado</th>
+                  <th className="px-6 py-4">Estado</th>
+                  <th className="px-6 py-4">Tipo Contrato</th>
+                  <th className="px-6 py-4">1er Día</th>
+                  <th className="px-6 py-4">Ciudad / Krankenkasse</th>
+                  <th className="px-6 py-4 text-right">Acciones</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {filteredEmployees.map(emp => (
+                  <tr key={emp.id} className="hover:bg-zinc-50/80 transition-colors group">
+                    <td className="px-6 py-4 font-bold text-zinc-900">
+                      {emp.lastName}, {emp.firstName}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                        emp.status === 'Activo' ? 'bg-emerald-100 text-emerald-800' : 'bg-zinc-100 text-zinc-600'
+                      }`}>
+                        {emp.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 font-semibold text-zinc-700">{emp.contractType}</td>
+                    <td className="px-6 py-4 text-zinc-500 font-medium">{emp.startDate || 'Sin asignar'}</td>
+                    <td className="px-6 py-4 text-zinc-500 font-medium">
+                      {emp.city ? `${emp.city} (${emp.krankenkasse})` : 'Sin registro'}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={() => setSelectedEmployee(emp)}
+                        className="bg-black text-white text-xs px-4 py-2.5 rounded-xl font-bold hover:bg-zinc-800 transition-all shadow-sm active:scale-95"
+                      >
+                        Gestionar Documentos
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
+        {/* Visor / Modal de Documentos con Estética Minimalista */}
         {selectedEmployee && (
-          <div className="bg-white border border-gray-300 rounded-2xl p-6 shadow-xl mb-12">
-            <div className="flex justify-between items-center border-b pb-4 mb-6">
+          <div className="bg-white border border-zinc-300 rounded-3xl p-8 shadow-2xl mb-12 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="flex justify-between items-center border-b border-zinc-200 pb-6 mb-6">
               <div>
-                <h2 className="text-xl font-bold">{selectedEmployee.firstName} {selectedEmployee.lastName}</h2>
-                <p className="text-xs text-gray-500">Empleador asignado: <strong className="text-black">{selectedEmployer.name}</strong></p>
+                <h2 className="text-2xl font-black text-zinc-900">{selectedEmployee.firstName} {selectedEmployee.lastName}</h2>
+                <p className="text-xs text-zinc-500 mt-1">Empleador asignado: <strong className="text-black font-semibold">{selectedEmployer.name}</strong></p>
               </div>
               <button 
                 onClick={() => setSelectedEmployee(null)}
-                className="text-gray-400 hover:text-black font-bold text-sm"
+                className="bg-zinc-100 hover:bg-black hover:text-white text-zinc-700 w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all"
               >
-                ✕ Cerrar
+                ✕
               </button>
             </div>
 
-            <div className="flex border-b border-gray-200 mb-6 gap-6 text-sm font-semibold">
-              <button 
-                onClick={() => setActiveTab('CONTRATO')} 
-                className={`pb-3 border-b-2 transition-all ${activeTab === 'CONTRATO' ? 'border-black text-black' : 'border-transparent text-gray-400'}`}
-              >
-                📄 Contrato (Arbeitsvertrag)
-              </button>
-              <button 
-                onClick={() => setActiveTab('INSTRUCCIONES')} 
-                className={`pb-3 border-b-2 transition-all ${activeTab === 'INSTRUCCIONES' ? 'border-black text-black' : 'border-transparent text-gray-400'}`}
-              >
-                📋 Instrucciones Operativas (§ 49 PBefG)
-              </button>
-              <button 
-                onClick={() => setActiveTab('EFECTIVO')} 
-                className={`pb-3 border-b-2 transition-all ${activeTab === 'EFECTIVO' ? 'border-black text-black' : 'border-transparent text-gray-400'}`}
-              >
-                💶 Entrega de Efectivo
-              </button>
-              <button 
-                onClick={() => setActiveTab('HORAS')} 
-                className={`pb-3 border-b-2 transition-all ${activeTab === 'HORAS' ? 'border-black text-black' : 'border-transparent text-gray-400'}`}
-              >
-                ⏱️ Registro de Horas
-              </button>
+            {/* Pestañas de Documentos */}
+            <div className="flex flex-wrap border-b border-zinc-200 mb-6 gap-6 text-sm font-bold">
+              {[
+                { id: 'CONTRATO', label: '📄 Contrato (Arbeitsvertrag)' },
+                { id: 'INSTRUCCIONES', label: '📋 Instrucciones (§ 49 PBefG)' },
+                { id: 'EFECTIVO', label: '💶 Entrega de Efectivo' },
+                { id: 'HORAS', label: '⏱️ Registro de Horas' },
+              ].map(tab => (
+                <button 
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)} 
+                  className={`pb-3 border-b-2 transition-all ${
+                    activeTab === tab.id ? 'border-black text-black' : 'border-transparent text-zinc-400 hover:text-zinc-700'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
 
-            <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 text-xs font-mono text-gray-800 leading-relaxed overflow-x-auto">
+            {/* Contenido del Documento Seleccionado */}
+            <div className="bg-zinc-900 text-zinc-100 p-8 rounded-2xl border border-zinc-800 text-xs font-mono leading-relaxed shadow-inner">
               {activeTab === 'CONTRATO' && (
-                <div>
-                  <h3 className="font-bold text-sm mb-2 text-black">ARBEITSVERTRAG — {selectedEmployee.contractType.toUpperCase()}</h3>
+                <div className="space-y-3">
+                  <h3 className="text-sm font-bold text-white tracking-wide border-b border-zinc-800 pb-2">ARBEITSVERTRAG — {selectedEmployee.contractType.toUpperCase()}</h3>
                   <p><strong>Arbeitgeber:</strong> {selectedEmployer.name} ({selectedEmployer.address})</p>
                   <p><strong>Arbeitnehmer:</strong> {selectedEmployee.firstName} {selectedEmployee.lastName}</p>
                   <p><strong>Geburtsdatum:</strong> {selectedEmployee.birthDate || 'N/A'}</p>
                   <p><strong>Wohnhaft:</strong> {selectedEmployee.address}, {selectedEmployee.zipCode} {selectedEmployee.city}</p>
-                  <p className="mt-4"><strong>§ 1 Beginn:</strong> Ab {selectedEmployee.startDate || 'Datum nach Vereinbarung'}</p>
-                  <p><strong>§ 3 Arbeitszeit:</strong> {selectedEmployee.contractType === 'Minijob' ? '4 Stunden/Woche' : '30 Stunden/Woche'}</p>
+                  <p><strong>Sozialversicherung Nr:</strong> {selectedEmployee.svNummer || 'N/A'}</p>
+                  <p><strong>Steuernummer:</strong> {selectedEmployee.stNummer || 'N/A'}</p>
+                  <p className="pt-2 text-zinc-300"><strong>§ 1 Beginn:</strong> Ab {selectedEmployee.startDate || 'Datum nach Vereinbarung'}</p>
+                  <p className="text-zinc-300"><strong>§ 3 Arbeitszeit:</strong> {selectedEmployee.contractType === 'Minijob' ? '4 Stunden/Woche' : '30 Stunden/Woche'}</p>
                 </div>
               )}
 
               {activeTab === 'INSTRUCCIONES' && (
-                <div>
-                  <h3 className="font-bold text-sm mb-2 text-black">Betriebliche Anweisungen für Fahrer (Mietwagen § 49 PBefG)</h3>
-                  <p>Gültig ab: {selectedEmployee.startDate || '1er Día'}</p>
+                <div className="space-y-3">
+                  <h3 className="text-sm font-bold text-white tracking-wide border-b border-zinc-800 pb-2">Betriebliche Anweisungen für Fahrer (Mietwagen § 49 PBefG)</h3>
+                  <p>Gültig ab: {selectedEmployee.startDate || 'Pendiente'}</p>
                   <p>Arbeitgeber: {selectedEmployer.name}</p>
                   <p>Fahrer: {selectedEmployee.firstName} {selectedEmployee.lastName}</p>
-                  <ul className="list-disc pl-5 mt-3 space-y-1">
-                    <li>1. Mitführpflichtige Unterlagen (Führerschein, P-Schein, Papiere).</li>
-                    <li>2. Annahme und Durchführung von Fahrten (Nur registrierte Aufträge).</li>
-                    <li>6. Rückkehrpflicht (§ 49 PBefG).</li>
-                    <li>8. Daily Arbeitszeiterfassung & Bargeldabrechnung.</li>
+                  <ul className="list-disc pl-5 mt-3 space-y-2 text-zinc-300">
+                    <li>1. Mitführpflichtige Unterlagen (Führerschein, P-Schein, Konzessionsauszug).</li>
+                    <li>2. Annahme und Durchführung von Fahrten ausschließlich über zugelassene Vermittler (Uber).</li>
+                    <li>6. Rückkehrpflicht (§ 49 PBefG) nach Auftragsende zum Betriebssitz.</li>
+                    <li>8. Tägliche Arbeitszeiterfassung & Bargeldabrechnungspflicht.</li>
                   </ul>
                 </div>
               )}
 
               {activeTab === 'EFECTIVO' && (
-                <div>
-                  <h3 className="font-bold text-sm mb-2 text-black">Bargeld-Übergabeprotokoll</h3>
+                <div className="space-y-3">
+                  <h3 className="text-sm font-bold text-white tracking-wide border-b border-zinc-800 pb-2">Bargeld-Übergabeprotokoll (Cash Delivery Log)</h3>
                   <p>Fahrer/in: {selectedEmployee.firstName} {selectedEmployee.lastName}</p>
-                  <p>Eintrittsdatum: {selectedEmployee.startDate || 'N/A'}</p>
-                  <p>Monat: Oktober 2026</p>
-                  <div className="mt-4 border-t pt-2 grid grid-cols-4 gap-2 text-center font-sans font-semibold">
-                    <span>KW</span>
-                    <span>Bargeldeinnahmen (€)</span>
-                    <span>An Arbeitgeber (€)</span>
-                    <span>Unterschrift</span>
+                  <p>Arbeitgeber: {selectedEmployer.name}</p>
+                  <div className="mt-4 border border-zinc-700 rounded-xl overflow-hidden">
+                    <div className="grid grid-cols-4 bg-zinc-800 p-3 text-center font-bold text-zinc-300">
+                      <span>KW (Woche)</span>
+                      <span>Einnahmen (€)</span>
+                      <span>Abgabe (€)</span>
+                      <span>Unterschrift</span>
+                    </div>
+                    <div className="grid grid-cols-4 p-3 text-center border-t border-zinc-800 text-zinc-400">
+                      <span>KW 40</span>
+                      <span>—</span>
+                      <span>—</span>
+                      <span>[ Pendiente ]</span>
+                    </div>
                   </div>
                 </div>
               )}
 
               {activeTab === 'HORAS' && (
-                <div>
-                  <h3 className="font-bold text-sm mb-2 text-black">STUNDENNACHWEIS ({selectedEmployee.contractType})</h3>
+                <div className="space-y-3">
+                  <h3 className="text-sm font-bold text-white tracking-wide border-b border-zinc-800 pb-2">STUNDENNACHWEIS ({selectedEmployee.contractType})</h3>
                   <p>Mitarbeiter: {selectedEmployee.firstName} {selectedEmployee.lastName}</p>
                   <p>Regelmäßige Arbeitszeit: {selectedEmployee.contractType === 'Minijob' ? '4 Std/Woche' : '30 Std/Woche'}</p>
-                  <p className="mt-2">Erfassung von Arbeitsbeginn, Ende, Pausen und Rufbereitschaft gemäß ArbZG.</p>
+                  <p className="text-zinc-400 mt-2">Erfassung von Arbeitsbeginn, Pausen und tatsächlicher Lenkzeit gemäß ArbZG.</p>
                 </div>
               )}
             </div>
