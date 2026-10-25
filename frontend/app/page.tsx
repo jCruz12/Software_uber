@@ -36,19 +36,16 @@ export default function App() {
   const [employees, setEmployees] = useState<any[]>([]);
   const [selectedEmployer, setSelectedEmployer] = useState(EMPLOYERS[0]);
 
-  // Filtros
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('Todos');
   const [contractFilter, setContractFilter] = useState('Todos');
-  const [viewMode, setViewMode] = useState('table'); // 'table' | 'grid'
+  const [viewMode, setViewMode] = useState('table');
 
-  // Modales
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<any>(null);
   const [viewingEmployee, setViewingEmployee] = useState<any>(null);
   const [deletingEmployeeId, setDeletingEmployeeId] = useState<any>(null);
 
-  // Formulario Empleado (Todos los campos obligatorios)
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -65,7 +62,6 @@ export default function App() {
     city: ''
   });
 
-  // Cargar empleados desde la Base de Datos (Backend / Render)
   const fetchEmployees = async () => {
     try {
       const res = await fetch(`${API_URL}/api/employees`);
@@ -91,7 +87,6 @@ export default function App() {
     setIsAuthenticated(false);
   };
 
-  // Filtrado de lista global y robusto
   const filteredEmployees = useMemo(() => {
     return employees.filter((emp) => {
       const searchString = `
@@ -113,7 +108,6 @@ export default function App() {
     });
   }, [employees, searchTerm, statusFilter, contractFilter]);
 
-  // Cálculos estadísticos
   const stats = useMemo(() => {
     const total = employees.length;
     const activos = employees.filter(e => e.status === 'Activo').length;
@@ -129,7 +123,6 @@ export default function App() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Crear Empleado en la Base de Datos
   const handleCreateEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -187,7 +180,6 @@ export default function App() {
     }
   };
 
-  // Cambiar estado Activo / Inactivo con clic directo
   const toggleEmployeeStatus = async (emp: any, e: React.MouseEvent) => {
     e.stopPropagation();
     const newStatus = emp.status === 'Activo' ? 'Inactivo' : 'Activo';
@@ -322,7 +314,6 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#F6F6F6] text-black flex flex-col font-sans">
       
-      {/* Barra de Navegación Principal */}
       <nav className="bg-black text-white px-6 py-4 sticky top-0 z-30 border-b border-gray-800">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-8">
@@ -331,7 +322,6 @@ export default function App() {
               <span className="font-light text-lg text-gray-300">Staff (Neon DB)</span>
             </div>
             
-            {/* Selector de Empleador */}
             <div className="hidden lg:flex items-center gap-2 bg-gray-900 px-3 py-1.5 border border-gray-800 rounded-lg">
               <span className="text-xs text-gray-400">Empleador:</span>
               <select 
@@ -368,7 +358,6 @@ export default function App() {
         </div>
       </nav>
 
-      {/* Contenido Principal */}
       <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-8 flex-1">
         
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
@@ -387,7 +376,6 @@ export default function App() {
           </button>
         </div>
 
-        {/* Tarjetas Informativas */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           <div className="bg-white p-5 border border-gray-200 shadow-sm">
             <div className="flex justify-between items-center text-gray-400 mb-2">
@@ -426,7 +414,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* Barra de Búsqueda y Filtros */}
         <div className="bg-white border border-gray-200 p-4 mb-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="relative flex-1">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -483,7 +470,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* Tabla / Tarjetas de Empleados */}
         {filteredEmployees.length === 0 ? (
           <div className="bg-white border border-gray-200 p-12 text-center my-8">
             <AlertCircle className="w-10 h-10 text-gray-300 mx-auto mb-3" />
@@ -591,7 +577,6 @@ export default function App() {
         )}
       </main>
 
-      {/* Modal de Detalle */}
       {viewingEmployee && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white text-black w-full max-w-2xl p-6 sm:p-8 border border-gray-300 shadow-2xl relative max-h-[90vh] overflow-y-auto">
@@ -621,7 +606,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Modal Crear / Editar con CAMPOS OBLIGATORIOS (*) */}
       {(isAddModalOpen || editingEmployee) && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white text-black w-full max-w-2xl p-6 sm:p-8 border border-gray-300 shadow-2xl relative max-h-[90vh] overflow-y-auto">
@@ -705,7 +689,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Modal Confirmar Eliminación */}
       {deletingEmployeeId && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white text-black w-full max-w-sm p-6 border border-gray-300 shadow-2xl">
