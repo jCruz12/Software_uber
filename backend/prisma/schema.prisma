@@ -12,51 +12,48 @@ model Employer {
   address   String
   employees Employee[]
   createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 model Employee {
-  id               String            @id @default(uuid())
-  idNum            Int               @unique
-  lastName         String            // Apellido
-  firstName        String            // Nombre
-  status           String            @default("Activo") // Activo / Inactivo
-  contractType     String            // Minijob / 1/2 Tiempo / No Aplica
-  startDate        DateTime?         // 1er día
-  contractUntil    DateTime?         // Contrato hasta
-  birthDate        DateTime?         // Nacimiento
-  krankenkasse     String?           // Caja de salud
-  marginalEmp      String?           // Empleo marginal (Knapp B-S)
-  stNummer         String?           // N° Fiscal
-  svNummer         String?           // N° Seguridad Social
-  address          String?           // Dirección
-  zipCode          String?           // Código Postal
-  city             String?           // Ciudad
-  employerId       String?
-  employer         Employer?         @relation(fields: [employerId], references: [id])
-  contracts        Contract[]
-  attachedDocs     AttachedDoc[]
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  id           String        @id @default(uuid())
+  idNum        Int?          @unique
+  lastName     String        // Apellido
+  firstName    String        // Nombre
+  status       String        @default("Activo") // Activo / Inactivo
+  contractType String        // Minijob / 1/2 Tiempo / No Aplica
+  startDate    DateTime?     // 1er día
+  contractUntil DateTime?    // Contrato hasta
+  birthDate    DateTime?     // Nacimiento
+  krankenkasse String?       // Caja de salud
+  marginalEmp  String?       // Empleo marginal (Knapp B-S)
+  stNummer     String?       // N° Fiscal
+  svNummer     String?       // N° Seguridad Social
+  address      String?       // Dirección
+  zipCode      String?       // Código Postal
+  city         String?       // Ciudad
+  employerId   String?
+  employer     Employer?     @relation(fields: [employerId], references: [id])
+  contracts    Contract[]
+  attachedDocs AttachedDoc[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 }
 
 model Contract {
-  id              String   @id @default(uuid())
-  employeeId      String
-  employee        Employee @relation(fields: [employeeId], references: [id])
-  type            String   // MINIJOB (4h/sem) o TEILZEIT (30h/sem)
-  weeklyHours     Float
-  probationMonths Int      @default(6)
-  generatedText   String   @db.Text
-  signedDate      DateTime?
-  createdAt       DateTime @default(now())
+  id         String   @id @default(uuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  type       String
+  content    String?
+  createdAt  DateTime @default(now())
 }
 
 model AttachedDoc {
-  id          String   @id @default(uuid())
-  employeeId  String
-  employee    Employee @relation(fields: [employeeId], references: [id])
-  docType     String   // INSTRUCCIONES_OPERATIVAS, ENTREGA_EFECTIVO, REGISTRO_HORAS
-  period      String?  // Ej: "Agosto 2026"
-  contentData Json?    // Datos del formulario o registro
-  createdAt   DateTime @default(now())
+  id         String   @id @default(uuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  title      String
+  fileUrl    String
+  createdAt  DateTime @default(now())
 }
