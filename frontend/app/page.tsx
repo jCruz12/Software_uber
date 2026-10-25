@@ -29,7 +29,7 @@ const EMPLOYERS = [
 const API_URL = 'https://software-uber.onrender.com';
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginEmail, setLoginEmail] = useState('admin@uber.com');
   const [loginPassword, setLoginPassword] = useState('uber1234');
 
