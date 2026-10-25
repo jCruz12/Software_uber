@@ -4,7 +4,6 @@ import dotenv from 'dotenv';
 import pkg from '@prisma/client';
 import pg from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
-import express from 'express';
 
 dotenv.config();
 
