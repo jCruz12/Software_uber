@@ -306,7 +306,6 @@ export default function App() {
             </form>
           </div>
         </main>
-        <footer className="text-center text-xs text-gray-500">© {new Date().getFullYear()} Uber Technologies Inc. Gestión de Empleados.</footer>
       </div>
     );
   }
