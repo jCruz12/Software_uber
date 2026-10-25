@@ -35,17 +35,21 @@ export default function App() {
 
   const [employees, setEmployees] = useState<any[]>([]);
   const [selectedEmployer, setSelectedEmployer] = useState(EMPLOYERS[0]);
+  const [currentYear, setCurrentYear] = useState('2026');
 
+  // Filtros
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('Todos');
   const [contractFilter, setContractFilter] = useState('Todos');
   const [viewMode, setViewMode] = useState('table');
 
+  // Modales
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<any>(null);
   const [viewingEmployee, setViewingEmployee] = useState<any>(null);
   const [deletingEmployeeId, setDeletingEmployeeId] = useState<any>(null);
 
+  // Formulario Empleado
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -75,6 +79,7 @@ export default function App() {
   };
 
   useEffect(() => {
+    setCurrentYear(String(new Date().getFullYear()));
     fetchEmployees();
   }, []);
 
@@ -306,6 +311,7 @@ export default function App() {
             </form>
           </div>
         </main>
+        <footer className="text-center text-xs text-gray-500">© {currentYear} Uber Technologies Inc. Gestión de Empleados.</footer>
       </div>
     );
   }
@@ -313,6 +319,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#F6F6F6] text-black flex flex-col font-sans">
       
+      {/* Barra de Navegación Principal */}
       <nav className="bg-black text-white px-6 py-4 sticky top-0 z-30 border-b border-gray-800">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-8">
@@ -357,6 +364,7 @@ export default function App() {
         </div>
       </nav>
 
+      {/* Contenido Principal */}
       <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-8 flex-1">
         
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
@@ -375,6 +383,7 @@ export default function App() {
           </button>
         </div>
 
+        {/* Tarjetas Informativas */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           <div className="bg-white p-5 border border-gray-200 shadow-sm">
             <div className="flex justify-between items-center text-gray-400 mb-2">
@@ -413,6 +422,7 @@ export default function App() {
           </div>
         </div>
 
+        {/* Barra de Búsqueda y Filtros */}
         <div className="bg-white border border-gray-200 p-4 mb-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="relative flex-1">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -469,6 +479,7 @@ export default function App() {
           </div>
         </div>
 
+        {/* Tabla Centrada */}
         {filteredEmployees.length === 0 ? (
           <div className="bg-white border border-gray-200 p-12 text-center my-8">
             <AlertCircle className="w-10 h-10 text-gray-300 mx-auto mb-3" />
@@ -481,50 +492,50 @@ export default function App() {
         ) : viewMode === 'table' ? (
           <div className="bg-white border border-gray-200 overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-center text-sm">
                 <thead className="bg-black text-white text-[11px] uppercase tracking-wider font-bold">
                   <tr>
-                    <th className="px-5 py-3.5">Empleado</th>
-                    <th className="px-4 py-3.5">Estado (Clic cambiar)</th>
-                    <th className="px-4 py-3.5">Contrato</th>
-                    <th className="px-4 py-3.5">1er Día</th>
-                    <th className="px-4 py-3.5">Krankenkasse</th>
-                    <th className="px-4 py-3.5">Nº Fiscal (St-Nr)</th>
-                    <th className="px-4 py-3.5">Nº Seg. Social (SV)</th>
-                    <th className="px-4 py-3.5 text-right">Acciones</th>
+                    <th className="px-5 py-3.5 text-center">Empleado</th>
+                    <th className="px-4 py-3.5 text-center">Estado (Clic cambiar)</th>
+                    <th className="px-4 py-3.5 text-center">Contrato</th>
+                    <th className="px-4 py-3.5 text-center">1er Día</th>
+                    <th className="px-4 py-3.5 text-center">Krankenkasse</th>
+                    <th className="px-4 py-3.5 text-center">Nº Fiscal (St-Nr)</th>
+                    <th className="px-4 py-3.5 text-center">Nº Seg. Social (SV)</th>
+                    <th className="px-4 py-3.5 text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 font-medium">
                   {filteredEmployees.map((emp) => (
                     <tr key={emp.id} className="hover:bg-gray-50/80 transition-colors">
-                      <td className="px-5 py-3.5 whitespace-nowrap">
-                        <button onClick={() => setViewingEmployee(emp)} className="font-bold text-gray-900 hover:underline text-left block">
+                      <td className="px-5 py-3.5 whitespace-nowrap text-center">
+                        <button onClick={() => setViewingEmployee(emp)} className="font-bold text-gray-900 hover:underline mx-auto block">
                           {emp.lastName}, {emp.firstName}
                         </button>
-                        <span className="text-[11px] text-gray-400 block truncate max-w-[200px]">
+                        <span className="text-[11px] text-gray-400 block truncate max-w-[200px] mx-auto">
                           {emp.city ? `${emp.city} (${emp.address || ''})` : 'Sin dirección'}
                         </span>
                       </td>
-                      <td className="px-4 py-3.5 whitespace-nowrap" onClick={(e) => toggleEmployeeStatus(emp, e)}>
+                      <td className="px-4 py-3.5 whitespace-nowrap text-center" onClick={(e) => toggleEmployeeStatus(emp, e)}>
                         {renderStatusBadge(emp.status)}
                       </td>
-                      <td className="px-4 py-3.5 whitespace-nowrap">
+                      <td className="px-4 py-3.5 whitespace-nowrap text-center">
                         {renderContractBadge(emp.contractType)}
                       </td>
-                      <td className="px-4 py-3.5 whitespace-nowrap font-mono text-xs text-gray-600">
+                      <td className="px-4 py-3.5 whitespace-nowrap font-mono text-xs text-gray-600 text-center">
                         {emp.startDate ? emp.startDate.substring(0, 10) : 'Sin asignar'}
                       </td>
-                      <td className="px-4 py-3.5 whitespace-nowrap text-xs text-gray-800">
+                      <td className="px-4 py-3.5 whitespace-nowrap text-xs text-gray-800 text-center">
                         {emp.krankenkasse || '-'}
                       </td>
-                      <td className="px-4 py-3.5 whitespace-nowrap font-mono text-xs text-gray-600">
+                      <td className="px-4 py-3.5 whitespace-nowrap font-mono text-xs text-gray-600 text-center">
                         {emp.stNummer || '-'}
                       </td>
-                      <td className="px-4 py-3.5 whitespace-nowrap font-mono text-xs text-gray-600">
+                      <td className="px-4 py-3.5 whitespace-nowrap font-mono text-xs text-gray-600 text-center">
                         {emp.svNummer || '-'}
                       </td>
-                      <td className="px-4 py-3.5 whitespace-nowrap text-right">
-                        <div className="flex items-center justify-end gap-1">
+                      <td className="px-4 py-3.5 whitespace-nowrap text-center">
+                        <div className="flex items-center justify-center gap-1">
                           <button onClick={() => setViewingEmployee(emp)} className="p-1.5 text-gray-400 hover:text-black hover:bg-gray-100 transition-all" title="Ver Ficha">
                             <Eye className="w-4 h-4" />
                           </button>
@@ -576,6 +587,7 @@ export default function App() {
         )}
       </main>
 
+      {/* Modal de Detalle */}
       {viewingEmployee && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white text-black w-full max-w-2xl p-6 sm:p-8 border border-gray-300 shadow-2xl relative max-h-[90vh] overflow-y-auto">
@@ -605,6 +617,7 @@ export default function App() {
         </div>
       )}
 
+      {/* Modal Crear / Editar */}
       {(isAddModalOpen || editingEmployee) && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white text-black w-full max-w-2xl p-6 sm:p-8 border border-gray-300 shadow-2xl relative max-h-[90vh] overflow-y-auto">
@@ -688,6 +701,7 @@ export default function App() {
         </div>
       )}
 
+      {/* Modal Confirmar Eliminación */}
       {deletingEmployeeId && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white text-black w-full max-w-sm p-6 border border-gray-300 shadow-2xl">
