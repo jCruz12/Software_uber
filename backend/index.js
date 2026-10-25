@@ -63,6 +63,20 @@ app.post('/api/employees', async (req, res) => {
   }
 });
 
+app.patch('/api/employees/:id/status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const updatedEmployee = await prisma.employee.update({
+      where: { id },
+      data: { status }
+    });
+    res.json(updatedEmployee);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Servidor Express corriendo en el puerto ${PORT}`);

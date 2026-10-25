@@ -8,7 +8,7 @@ const EMPLOYERS = [
   { id: '3', name: 'YottaHWattH HD2', address: 'Wangerowstraße 14, 69115 Heidelberg' },
 ];
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://software-uber.onrender.com';
+const API_URL = 'https://software-uber.onrender.com';
 
 export default function Dashboard() {
   const [employees, setEmployees] = useState<any[]>([]);
@@ -73,8 +73,37 @@ export default function Dashboard() {
     }
   };
 
+  // Función para cambiar el estado Activo / Inactivo en la BD
+  const toggleEmployeeStatus = async (emp: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newStatus = emp.status === 'Activo' ? 'Inactivo' : 'Activo';
+    try {
+      const res = await fetch(`${API_URL}/api/employees/${emp.id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) {
+        fetchEmployees();
+      }
+    } catch (error) {
+      console.error('Error al actualizar estado:', error);
+    }
+  };
+
+  // Filtro de búsqueda optimizado para TODOS los campos
   const filteredEmployees = employees.filter(emp => {
-    const matchesSearch = `${emp.firstName} ${emp.lastName} ${emp.city || ''}`.toLowerCase().includes(searchTerm.toLowerCase());
+    const searchString = `
+      ${emp.firstName || ''} 
+      ${emp.lastName || ''} 
+      ${emp.city || ''} 
+      ${emp.contractType || ''} 
+      ${emp.krankenkasse || ''} 
+      ${emp.stNummer || ''} 
+      ${emp.svNummer || ''}
+    `.toLowerCase();
+
+    const matchesSearch = searchString.includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'TODOS' || emp.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -85,7 +114,7 @@ export default function Dashboard() {
         <div className="flex items-center gap-4">
           <span className="text-2xl font-black tracking-tighter">Uber<span className="font-light text-zinc-400">Portal</span></span>
           <span className="text-[11px] uppercase tracking-wider bg-zinc-900 text-zinc-300 px-3 py-1 rounded-full border border-zinc-700 font-semibold">
-            Fleet & Contract Management (DB Connected)
+            Fleet & Contract Management
           </span>
         </div>
         
@@ -114,6 +143,7 @@ export default function Dashboard() {
       </nav>
 
       <main className="max-w-7xl mx-auto px-6 py-10">
+        {/* Métricas */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="bg-white p-6 rounded-2xl border border-zinc-200/80 shadow-sm">
             <p className="text-xs font-bold uppercase text-zinc-400 tracking-wider">Total Empleados</p>
@@ -139,13 +169,14 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Búsqueda Global y Filtros */}
         <div className="bg-white rounded-2xl border border-zinc-200/80 p-4 mb-6 flex flex-col md:flex-row gap-4 justify-between items-center shadow-sm">
           <input
             type="text"
-            placeholder="Buscar por nombre, apellido o ciudad..."
+            placeholder="Buscar por nombre, apellido, ciudad, contrato, seguro..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full md:w-96 bg-zinc-100/80 rounded-xl px-4 py-3 text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-black transition-all"
+            className="w-full md:w-[450px] bg-zinc-100/80 rounded-xl px-4 py-3 text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-black transition-all"
           />
           <div className="flex gap-2 w-full md:w-auto">
             {['TODOS', 'Activo', 'Inactivo'].map(st => (
@@ -162,13 +193,14 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Tabla con opción de cambiar estado */}
         <div className="bg-white rounded-2xl border border-zinc-200/80 overflow-hidden shadow-sm mb-10">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="bg-zinc-50 border-b border-zinc-200 text-xs text-zinc-400 uppercase tracking-wider font-semibold">
                 <tr>
                   <th className="px-6 py-4">Empleado</th>
-                  <th className="px-6 py-4">Estado</th>
+                  <th className="px-6 py-4">Estado (Clic para cambiar)</th>
                   <th className="px-6 py-4">Tipo Contrato</th>
                   <th className="px-6 py-4">1er Día</th>
                   <th className="px-6 py-4">Ciudad / Krankenkasse</th>
@@ -182,11 +214,17 @@ export default function Dashboard() {
                       {emp.lastName}, {emp.firstName}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        emp.status === 'Activo' ? 'bg-emerald-100 text-emerald-800' : 'bg-zinc-100 text-zinc-600'
-                      }`}>
-                        {emp.status}
-                      </span>
+                      <button
+                        onClick={(e) => toggleEmployeeStatus(emp, e)}
+                        title="Haz clic para cambiar estado"
+                        className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer shadow-sm ${
+                          emp.status === 'Activo' 
+                            ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' 
+                            : 'bg-zinc-200 text-zinc-600 hover:bg-zinc-300'
+                        }`}
+                      >
+                        {emp.status} 🔄
+                      </button>
                     </td>
                     <td className="px-6 py-4 font-semibold text-zinc-700">{emp.contractType}</td>
                     <td className="px-6 py-4 text-zinc-500 font-medium">{emp.startDate ? emp.startDate.substring(0, 10) : 'Sin asignar'}</td>
@@ -208,6 +246,7 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Modal de Creación con campos obligatorios */}
         {showCreateModal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-3xl max-w-2xl w-full p-8 shadow-2xl border border-zinc-200">
@@ -218,59 +257,59 @@ export default function Dashboard() {
 
               <form onSubmit={handleCreateEmployee} className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-medium">
                 <div>
-                  <label className="text-zinc-500 block mb-1">Nombre</label>
+                  <label className="text-zinc-500 block mb-1">Nombre *</label>
                   <input type="text" required value={newEmp.firstName} onChange={e => setNewEmp({...newEmp, firstName: e.target.value})} className="w-full bg-zinc-100 p-3 rounded-xl border border-zinc-200" />
                 </div>
                 <div>
-                  <label className="text-zinc-500 block mb-1">Apellido</label>
+                  <label className="text-zinc-500 block mb-1">Apellido *</label>
                   <input type="text" required value={newEmp.lastName} onChange={e => setNewEmp({...newEmp, lastName: e.target.value})} className="w-full bg-zinc-100 p-3 rounded-xl border border-zinc-200" />
                 </div>
                 <div>
-                  <label className="text-zinc-500 block mb-1">Estado</label>
-                  <select value={newEmp.status} onChange={e => setNewEmp({...newEmp, status: e.target.value})} className="w-full bg-zinc-100 p-3 rounded-xl border border-zinc-200">
+                  <label className="text-zinc-500 block mb-1">Estado *</label>
+                  <select required value={newEmp.status} onChange={e => setNewEmp({...newEmp, status: e.target.value})} className="w-full bg-zinc-100 p-3 rounded-xl border border-zinc-200">
                     <option value="Activo">Activo</option>
                     <option value="Inactivo">Inactivo</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-zinc-500 block mb-1">Tipo de Contrato</label>
-                  <select value={newEmp.contractType} onChange={e => setNewEmp({...newEmp, contractType: e.target.value})} className="w-full bg-zinc-100 p-3 rounded-xl border border-zinc-200">
+                  <label className="text-zinc-500 block mb-1">Tipo de Contrato *</label>
+                  <select required value={newEmp.contractType} onChange={e => setNewEmp({...newEmp, contractType: e.target.value})} className="w-full bg-zinc-100 p-3 rounded-xl border border-zinc-200">
                     <option value="Minijob">Minijob</option>
                     <option value="1/2 Tiempo">1/2 Tiempo</option>
                     <option value="No Aplica">No Aplica</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-zinc-500 block mb-1">1er Día</label>
-                  <input type="date" value={newEmp.startDate} onChange={e => setNewEmp({...newEmp, startDate: e.target.value})} className="w-full bg-zinc-100 p-3 rounded-xl border border-zinc-200" />
+                  <label className="text-zinc-500 block mb-1">1er Día *</label>
+                  <input type="date" required value={newEmp.startDate} onChange={e => setNewEmp({...newEmp, startDate: e.target.value})} className="w-full bg-zinc-100 p-3 rounded-xl border border-zinc-200" />
                 </div>
                 <div>
-                  <label className="text-zinc-500 block mb-1">Nacimiento</label>
-                  <input type="date" value={newEmp.birthDate} onChange={e => setNewEmp({...newEmp, birthDate: e.target.value})} className="w-full bg-zinc-100 p-3 rounded-xl border border-zinc-200" />
+                  <label className="text-zinc-500 block mb-1">Nacimiento *</label>
+                  <input type="date" required value={newEmp.birthDate} onChange={e => setNewEmp({...newEmp, birthDate: e.target.value})} className="w-full bg-zinc-100 p-3 rounded-xl border border-zinc-200" />
                 </div>
                 <div>
-                  <label className="text-zinc-500 block mb-1">Krankenkasse</label>
-                  <input type="text" value={newEmp.krankenkasse} onChange={e => setNewEmp({...newEmp, krankenkasse: e.target.value})} className="w-full bg-zinc-100 p-3 rounded-xl border border-zinc-200" />
+                  <label className="text-zinc-500 block mb-1">Krankenkasse *</label>
+                  <input type="text" required value={newEmp.krankenkasse} onChange={e => setNewEmp({...newEmp, krankenkasse: e.target.value})} className="w-full bg-zinc-100 p-3 rounded-xl border border-zinc-200" />
                 </div>
                 <div>
-                  <label className="text-zinc-500 block mb-1">St-Nummer</label>
-                  <input type="text" value={newEmp.stNummer} onChange={e => setNewEmp({...newEmp, stNummer: e.target.value})} className="w-full bg-zinc-100 p-3 rounded-xl border border-zinc-200" />
+                  <label className="text-zinc-500 block mb-1">St-Nummer *</label>
+                  <input type="text" required value={newEmp.stNummer} onChange={e => setNewEmp({...newEmp, stNummer: e.target.value})} className="w-full bg-zinc-100 p-3 rounded-xl border border-zinc-200" />
                 </div>
                 <div>
-                  <label className="text-zinc-500 block mb-1">SV-Nummer</label>
-                  <input type="text" value={newEmp.svNummer} onChange={e => setNewEmp({...newEmp, svNummer: e.target.value})} className="w-full bg-zinc-100 p-3 rounded-xl border border-zinc-200" />
+                  <label className="text-zinc-500 block mb-1">SV-Nummer *</label>
+                  <input type="text" required value={newEmp.svNummer} onChange={e => setNewEmp({...newEmp, svNummer: e.target.value})} className="w-full bg-zinc-100 p-3 rounded-xl border border-zinc-200" />
                 </div>
                 <div>
-                  <label className="text-zinc-500 block mb-1">Dirección</label>
-                  <input type="text" value={newEmp.address} onChange={e => setNewEmp({...newEmp, address: e.target.value})} className="w-full bg-zinc-100 p-3 rounded-xl border border-zinc-200" />
+                  <label className="text-zinc-500 block mb-1">Dirección *</label>
+                  <input type="text" required value={newEmp.address} onChange={e => setNewEmp({...newEmp, address: e.target.value})} className="w-full bg-zinc-100 p-3 rounded-xl border border-zinc-200" />
                 </div>
                 <div>
-                  <label className="text-zinc-500 block mb-1">Código Postal</label>
-                  <input type="text" value={newEmp.zipCode} onChange={e => setNewEmp({...newEmp, zipCode: e.target.value})} className="w-full bg-zinc-100 p-3 rounded-xl border border-zinc-200" />
+                  <label className="text-zinc-500 block mb-1">Código Postal *</label>
+                  <input type="text" required value={newEmp.zipCode} onChange={e => setNewEmp({...newEmp, zipCode: e.target.value})} className="w-full bg-zinc-100 p-3 rounded-xl border border-zinc-200" />
                 </div>
                 <div>
-                  <label className="text-zinc-500 block mb-1">Ciudad</label>
-                  <input type="text" value={newEmp.city} onChange={e => setNewEmp({...newEmp, city: e.target.value})} className="w-full bg-zinc-100 p-3 rounded-xl border border-zinc-200" />
+                  <label className="text-zinc-500 block mb-1">Ciudad *</label>
+                  <input type="text" required value={newEmp.city} onChange={e => setNewEmp({...newEmp, city: e.target.value})} className="w-full bg-zinc-100 p-3 rounded-xl border border-zinc-200" />
                 </div>
                 <div className="md:col-span-2 flex justify-end gap-3 mt-4">
                   <button type="button" onClick={() => setShowCreateModal(false)} className="px-5 py-3 rounded-xl bg-zinc-200 font-bold">Cancelar</button>
