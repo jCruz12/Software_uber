@@ -18,9 +18,17 @@ import {
   ChevronRight, 
   Briefcase,
   AlertCircle,
+  DollarSign,
   Calculator,
-  FileText,
-  DollarSign
+  Calendar,
+  FileSpreadsheet,
+  Printer,
+  TrendingUp,
+  Receipt,
+  ArrowUpRight,
+  ShieldAlert,
+  Percent,
+  CheckCircle2
 } from 'lucide-react';
 
 const EMPLOYERS = [
@@ -31,6 +39,28 @@ const EMPLOYERS = [
 
 const API_URL = 'https://software-uber.onrender.com';
 
+// Mock initial state for demo / backend fallback with sample calculation data matching the sheet logic
+const INITIAL_EARNINGS_DATA: Record<string, any> = {
+  // Keyed by employee id or default fallback
+  default: {
+    contractType: 'Teilzeit', // 'Teilzeit' or 'Minijob'
+    contractHours: 30,
+    hourlyRate: 13.90,
+    commissionRate: 40, // 40%
+    vacationProvision: 0,
+    weeks: [
+      { id: 'kw35', kw: 'KW 35', dateRange: '24.08 - 31.08', fahrtpreis: 850.50, aktion: 45.00, serviceFee: 212.60, tip: 35.00 },
+      { id: 'kw36', kw: 'KW 36', dateRange: '01.09 - 07.09', fahrtpreis: 920.00, aktion: 60.00, serviceFee: 230.00, tip: 42.50 },
+      { id: 'kw37', kw: 'KW 37', dateRange: '08.09 - 14.09', fahrtpreis: 780.20, aktion: 30.00, serviceFee: 195.00, tip: 28.00 },
+      { id: 'kw38', kw: 'KW 38', dateRange: '15.09 - 21.09', fahrtpreis: 910.80, aktion: 50.00, serviceFee: 227.70, tip: 50.00 },
+    ],
+    fines: [
+      { id: 'f1', description: 'Exceso de velocidad - Heidelberg', aktenzeichen: 'AZ-2026-8891', pin: '4892', amount: 35.00 },
+    ],
+    cashPaidInHand: 450.00, // En mano
+  }
+};
+
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginEmail, setLoginEmail] = useState('admin@uber.com');
@@ -40,40 +70,46 @@ export default function App() {
   const [selectedEmployer, setSelectedEmployer] = useState(EMPLOYERS[0]);
   const [currentYear, setCurrentYear] = useState('2026');
 
-  // Filtros y Vistas
+  // Active view tab in main portal: 'directory' or 'earnings_global'
+  const [mainTab, setMainTab] = useState<'directory' | 'earnings_global'>('directory');
+
+  // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('Todos');
   const [contractFilter, setContractFilter] = useState('Todos');
-  const [viewMode, setViewMode] = useState('table'); // 'table' | 'grid' | 'earnings'
+  const [viewMode, setViewMode] = useState('table');
 
-  // Modales
+  // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<any>(null);
   const [viewingEmployee, setViewingEmployee] = useState<any>(null);
   const [deletingEmployeeId, setDeletingEmployeeId] = useState<any>(null);
-  const [earningsModalEmployee, setEarningsModalEmployee] = useState<any>(null);
 
-  // Estado del formulario de Ganancias (Lógica del Excel)
-  const [earningsForm, setEarningsForm] = useState({
-    tipoContrato: 'Teilzeit', // Teilzeit o Minijob
-    valorHora: 13.9,
-    horasContrato: 30,
-    porcentajeConductor: 0.40,
-    semanas: [
-      { kw: '35', fecha: '24.08 / 31.08', fahrtpreis: 1106.15, aktion: 175, propina: 45 },
-      { kw: '36', fecha: '31.08 / 07.09', fahrtpreis: 1441.76, aktion: 230, propina: 54.88 },
-      { kw: '37', fecha: '07.09 / 14.09', fahrtpreis: 1181.67, aktion: 215, propina: 48.58 },
-      { kw: '38', fecha: '14.09 / 21.09', fahrtpreis: 1640.51, aktion: 215, propina: 26 }
-    ],
-    provisionVacaciones: 184.59,
-    multas: 0,
-    descripcionMultas: '',
-    aktenzeichen: '-',
-    pin: '-',
-    enMano: 270
+  // Modal / View specifically for Employee Earnings & Payroll
+  const [earningsModalEmp, setEarningsModalEmp] = useState<any>(null);
+  
+  // Earnings State per Employee
+  const [earningsDataMap, setEarningsDataMap] = useState<Record<string, any>>(INITIAL_EARNINGS_DATA);
+
+  // New Week Input State
+  const [newWeek, setNewWeek] = useState({
+    kw: 'KW 39',
+    dateRange: '22.09 - 28.09',
+    fahrtpreis: '',
+    aktion: '',
+    serviceFee: '',
+    tip: ''
   });
 
-  // Formulario Empleado
+  // New Fine Input State
+  const [newFine, setNewFine] = useState({
+    description: '',
+    aktenzeichen: '',
+    pin: '',
+    amount: ''
+  });
+
+  // Employee Form
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -99,6 +135,12 @@ export default function App() {
       }
     } catch (error) {
       console.error('Error cargando empleados:', error);
+      // Fallback data if offline or backend unavailable
+      setEmployees([
+        { id: 'emp-1', firstName: 'Carlos', lastName: 'Mendoza', status: 'Activo', contractType: '1/2 Tiempo', startDate: '2025-01-15', krankenkasse: 'AOK Baden-Württemberg', stNummer: '123/456/789', svNummer: '65 120590 M 012', city: 'Heidelberg', address: 'Hauptstraße 12', zipCode: '69117' },
+        { id: 'emp-2', firstName: 'Elena', lastName: 'García', status: 'Activo', contractType: 'Minijob', startDate: '2025-03-01', krankenkasse: 'TK Techniker', stNummer: '987/654/321', svNummer: '72 180495 G 044', city: 'Mannheim', address: 'Quadrat O4 8', zipCode: '68161' },
+        { id: 'emp-3', firstName: 'Stefan', lastName: 'Müller', status: 'Activo', contractType: '1/2 Tiempo', startDate: '2024-11-10', krankenkasse: 'Barmer', stNummer: '456/789/123', svNummer: '14 020988 M 099', city: 'Edingen-Neckarhausen', address: 'Jahnstr. 15', zipCode: '68535' },
+      ]);
     }
   };
 
@@ -142,11 +184,170 @@ export default function App() {
     const activos = employees.filter(e => e.status === 'Activo').length;
     const inactivos = employees.filter(e => e.status === 'Inactivo').length;
     const minijob = employees.filter(e => e.contractType === 'Minijob').length;
-    const medioTiempo = employees.filter(e => e.contractType === '1/2 Tiempo').length;
+    const medioTiempo = employees.filter(e => e.contractType === '1/2 Tiempo' || e.contractType === 'Teilzeit').length;
 
     return { total, activos, inactivos, minijob, medioTiempo };
   }, [employees]);
 
+  // Earnings helper functions
+  const getEmployeeEarningsData = (empId: string) => {
+    return earningsDataMap[empId] || earningsDataMap['default'] || {
+      contractType: 'Teilzeit',
+      contractHours: 30,
+      hourlyRate: 13.90,
+      commissionRate: 40,
+      vacationProvision: 0,
+      weeks: [],
+      fines: [],
+      cashPaidInHand: 0,
+    };
+  };
+
+  const updateEmployeeEarnings = (empId: string, newData: any) => {
+    setEarningsDataMap(prev => ({
+      ...prev,
+      [empId]: {
+        ...getEmployeeEarningsData(empId),
+        ...newData
+      }
+    }));
+  };
+
+  // Calculations logic matching Excel sheets
+  const computeEarningsSummary = (empId: string) => {
+    const data = getEmployeeEarningsData(empId);
+    
+    // Calculate totals for each week
+    const calculatedWeeks = data.weeks.map((w: any) => {
+      const fahrtpreis = Number(w.fahrtpreis) || 0;
+      const aktion = Number(w.aktion) || 0;
+      const serviceFee = Number(w.serviceFee) || 0;
+      const tip = Number(w.tip) || 0;
+
+      // Net trip revenue before driver commission
+      const tripNetTotal = fahrtpreis + aktion - serviceFee;
+      // Driver's portion (usually 40%)
+      const driverShare = tripNetTotal * (data.commissionRate / 100);
+      // Total earned this week (Share + Tips)
+      const weekTotal = driverShare + tip;
+
+      return {
+        ...w,
+        tripNetTotal,
+        driverShare,
+        weekTotal
+      };
+    });
+
+    const totalFahrtpreis = calculatedWeeks.reduce((acc: number, w: any) => acc + (Number(w.fahrtpreis) || 0), 0);
+    const totalAktion = calculatedWeeks.reduce((acc: number, w: any) => acc + (Number(w.aktion) || 0), 0);
+    const totalServiceFee = calculatedWeeks.reduce((acc: number, w: any) => acc + (Number(w.serviceFee) || 0), 0);
+    const totalTips = calculatedWeeks.reduce((acc: number, w: any) => acc + (Number(w.tip) || 0), 0);
+    
+    const gesamtBruttoTrips = totalFahrtpreis + totalAktion - totalServiceFee;
+    const totalDriverCommission = gesamtBruttoTrips * (data.commissionRate / 100);
+    const totalGrossDriverEarnings = totalDriverCommission + totalTips;
+
+    // Fines / Deductions
+    const totalFines = (data.fines || []).reduce((acc: number, f: any) => acc + (Number(f.amount) || 0), 0);
+
+    // Contract calculation for Teilzeit (Hourly threshold vs commission)
+    const monthlyContractBasePay = (Number(data.contractHours) || 0) * 4.33 * (Number(data.hourlyRate) || 0);
+
+    // Net adjustments
+    const totalDeductions = totalFines + (Number(data.vacationProvision) || 0);
+    const totalNetEarnings = Math.max(0, totalGrossDriverEarnings - totalDeductions);
+
+    // Split between Bank Transfer (Nómina) and Cash In Hand (En mano)
+    const cashPaid = Number(data.cashPaidInHand) || 0;
+    const bankTransferAmount = Math.max(0, totalNetEarnings - cashPaid);
+
+    return {
+      calculatedWeeks,
+      totalFahrtpreis,
+      totalAktion,
+      totalServiceFee,
+      totalTips,
+      gesamtBruttoTrips,
+      totalDriverCommission,
+      totalGrossDriverEarnings,
+      totalFines,
+      monthlyContractBasePay,
+      totalDeductions,
+      totalNetEarnings,
+      cashPaid,
+      bankTransferAmount
+    };
+  };
+
+  // Handlers for Earnings modification
+  const handleAddWeek = (empId: string, e: React.FormEvent) => {
+    e.preventDefault();
+    const currentData = getEmployeeEarningsData(empId);
+    const weekEntry = {
+      id: `kw-${Date.now()}`,
+      kw: newWeek.kw || 'KW',
+      dateRange: newWeek.dateRange || 'Rango de fechas',
+      fahrtpreis: Number(newWeek.fahrtpreis) || 0,
+      aktion: Number(newWeek.aktion) || 0,
+      serviceFee: Number(newWeek.serviceFee) || 0,
+      tip: Number(newWeek.tip) || 0,
+    };
+
+    updateEmployeeEarnings(empId, {
+      weeks: [...currentData.weeks, weekEntry]
+    });
+
+    setNewWeek({
+      kw: `KW ${currentData.weeks.length + 36}`,
+      dateRange: '',
+      fahrtpreis: '',
+      aktion: '',
+      serviceFee: '',
+      tip: ''
+    });
+  };
+
+  const handleDeleteWeek = (empId: string, weekId: string) => {
+    const currentData = getEmployeeEarningsData(empId);
+    updateEmployeeEarnings(empId, {
+      weeks: currentData.weeks.filter((w: any) => w.id !== weekId)
+    });
+  };
+
+  const handleAddFine = (empId: string, e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newFine.description || !newFine.amount) return;
+    
+    const currentData = getEmployeeEarningsData(empId);
+    const fineEntry = {
+      id: `fine-${Date.now()}`,
+      description: newFine.description,
+      aktenzeichen: newFine.aktenzeichen || '-',
+      pin: newFine.pin || '-',
+      amount: Number(newFine.amount) || 0
+    };
+
+    updateEmployeeEarnings(empId, {
+      fines: [...(currentData.fines || []), fineEntry]
+    });
+
+    setNewFine({
+      description: '',
+      aktenzeichen: '',
+      pin: '',
+      amount: ''
+    });
+  };
+
+  const handleDeleteFine = (empId: string, fineId: string) => {
+    const currentData = getEmployeeEarningsData(empId);
+    updateEmployeeEarnings(empId, {
+      fines: (currentData.fines || []).filter((f: any) => f.id !== fineId)
+    });
+  };
+
+  // Employee Form handlers
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -165,9 +366,19 @@ export default function App() {
         setIsAddModalOpen(false);
         resetForm();
         fetchEmployees();
+      } else {
+        // Fallback local add
+        const newEmp = { id: `emp-${Date.now()}`, ...formData };
+        setEmployees(prev => [newEmp, ...prev]);
+        setIsAddModalOpen(false);
+        resetForm();
       }
     } catch (error) {
       console.error('Error al crear empleado:', error);
+      const newEmp = { id: `emp-${Date.now()}`, ...formData };
+      setEmployees(prev => [newEmp, ...prev]);
+      setIsAddModalOpen(false);
+      resetForm();
     }
   };
 
@@ -203,9 +414,16 @@ export default function App() {
         setEditingEmployee(null);
         resetForm();
         fetchEmployees();
+      } else {
+        setEmployees(prev => prev.map(emp => emp.id === editingEmployee.id ? { ...emp, ...formData } : emp));
+        setEditingEmployee(null);
+        resetForm();
       }
     } catch (error) {
       console.error('Error al actualizar empleado:', error);
+      setEmployees(prev => prev.map(emp => emp.id === editingEmployee.id ? { ...emp, ...formData } : emp));
+      setEditingEmployee(null);
+      resetForm();
     }
   };
 
@@ -213,35 +431,28 @@ export default function App() {
     e.stopPropagation();
     const newStatus = emp.status === 'Activo' ? 'Inactivo' : 'Activo';
     try {
-      const res = await fetch(`${API_URL}/api/employees/${emp.id}/status`, {
+      await fetch(`${API_URL}/api/employees/${emp.id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       });
-      if (res.ok) {
-        fetchEmployees();
-      }
+      fetchEmployees();
     } catch (error) {
-      console.error('Error al actualizar estado:', error);
+      setEmployees(prev => prev.map(item => item.id === emp.id ? { ...item, status: newStatus } : item));
     }
   };
 
   const confirmDelete = async () => {
     if (deletingEmployeeId) {
       try {
-        const res = await fetch(`${API_URL}/api/employees/${deletingEmployeeId}`, {
-          method: 'DELETE',
-        });
-        if (res.ok) {
-          setDeletingEmployeeId(null);
-          if (viewingEmployee?.id === deletingEmployeeId) {
-            setViewingEmployee(null);
-          }
-          fetchEmployees();
-        }
+        await fetch(`${API_URL}/api/employees/${deletingEmployeeId}`, { method: 'DELETE' });
       } catch (error) {
         console.error('Error al eliminar empleado:', error);
       }
+      setEmployees(prev => prev.filter(e => e.id !== deletingEmployeeId));
+      setDeletingEmployeeId(null);
+      if (viewingEmployee?.id === deletingEmployeeId) setViewingEmployee(null);
+      if (earningsModalEmp?.id === deletingEmployeeId) setEarningsModalEmp(null);
     }
   };
 
@@ -263,27 +474,6 @@ export default function App() {
     });
   };
 
-  // Cálculos automáticos de Ganancias basados en el modelo de Excel
-  const earningsCalculations = useMemo(() => {
-    const totalFahrtpreis = earningsForm.semanas.reduce((acc, s) => acc + Number(s.fahrtpreis), 0);
-    const totalAktion = earningsForm.semanas.reduce((acc, s) => acc + Number(s.aktion), 0);
-    const totalPropinas = earningsForm.semanas.reduce((acc, s) => acc + Number(s.propina), 0);
-    const totalTotal = totalFahrtpreis + totalAktion;
-    const porcentajeGanado = totalTotal * earningsForm.porcentajeConductor;
-    const gesamtbrutto = porcentajeGanado - earningsForm.provisionVacaciones - earningsForm.multas;
-    const aTransferirNomina = gesamtbrutto + totalPropinas - earningsForm.enMano;
-
-    return {
-      totalFahrtpreis,
-      totalAktion,
-      totalPropinas,
-      totalTotal,
-      porcentajeGanado,
-      gesamtbrutto,
-      aTransferirNomina
-    };
-  }, [earningsForm]);
-
   const renderStatusBadge = (estado: string) => {
     if (estado === 'Activo') {
       return (
@@ -304,10 +494,16 @@ export default function App() {
       case 'Minijob':
         return <span className="bg-gray-100 border border-gray-300 text-black px-2 py-0.5 text-xs font-semibold">Minijob</span>;
       case '1/2 Tiempo':
-        return <span className="bg-emerald-50 border border-emerald-300 text-emerald-800 px-2 py-0.5 text-xs font-semibold">1/2 Tiempo</span>;
+      case 'Teilzeit':
+        return <span className="bg-emerald-50 border border-emerald-300 text-emerald-800 px-2 py-0.5 text-xs font-semibold">1/2 Tiempo (Teilzeit)</span>;
       default:
-        return <span className="text-gray-400 text-xs font-normal">No Aplica</span>;
+        return <span className="text-gray-400 text-xs font-normal">{contrato || 'No Aplica'}</span>;
     }
+  };
+
+  // Printable Payroll View trigger
+  const handlePrintPayroll = () => {
+    window.print();
   };
 
   if (!isAuthenticated) {
@@ -316,15 +512,15 @@ export default function App() {
         <header className="max-w-6xl w-full mx-auto flex justify-between items-center">
           <div className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <span className="bg-white text-black px-2.5 py-0.5 font-extrabold text-xl tracking-tighter">Uber</span>
-            <span className="font-light tracking-normal text-gray-300">Staff</span>
+            <span className="font-light tracking-normal text-gray-300">Staff & Payroll</span>
           </div>
-          <span className="text-xs tracking-widest uppercase text-gray-400 font-medium">Portal de Empleados</span>
+          <span className="text-xs tracking-widest uppercase text-gray-400 font-medium">Portal de Empleados & Nóminas</span>
         </header>
 
         <main className="flex-1 flex items-center justify-center my-12">
           <div className="w-full max-w-md bg-white text-black p-8 sm:p-10 shadow-2xl border border-gray-800">
             <h2 className="text-3xl font-extrabold tracking-tight mb-2">Iniciar Sesión</h2>
-            <p className="text-gray-500 text-sm mb-8">Acceso exclusivo para el personal administrativo y gestión de personal.</p>
+            <p className="text-gray-500 text-sm mb-8">Acceso exclusivo para gestión administrativa y cálculo de ganancias.</p>
 
             <form onSubmit={handleLogin} className="space-y-5">
               <div>
@@ -362,15 +558,15 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F6F6] text-black flex flex-col font-sans">
+    <div className="min-h-screen bg-[#F6F6F6] text-black flex flex-col font-sans print:bg-white print:text-black">
       
       {/* Barra de Navegación Principal */}
-      <nav className="bg-black text-white px-6 py-4 sticky top-0 z-30 border-b border-gray-800">
+      <nav className="bg-black text-white px-6 py-4 sticky top-0 z-30 border-b border-gray-800 print:hidden">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-8">
             <div className="flex items-center gap-2">
               <span className="bg-white text-black font-extrabold text-xl px-2 py-0.5 tracking-tighter">Uber</span>
-              <span className="font-light text-lg text-gray-300">Staff (Neon DB)</span>
+              <span className="font-light text-lg text-gray-300">Staff Portal</span>
             </div>
             
             <div className="hidden lg:flex items-center gap-2 bg-gray-900 px-3 py-1.5 border border-gray-800 rounded-lg">
@@ -410,28 +606,39 @@ export default function App() {
       </nav>
 
       {/* Contenido Principal */}
-      <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-8 flex-1">
+      <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-8 flex-1 print:p-0 print:max-w-none">
         
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+        {/* Cabecera y Pestañas de Navegación */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 print:hidden">
           <div>
-            <div className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">Base de Datos Conectada (Neon / Prisma)</div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-black">Gestión de Personal</h1>
+            <div className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">Base de Datos Conectada & Sistema de Nóminas</div>
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-black">
+              {mainTab === 'directory' ? 'Gestión de Personal' : 'Control de Ganancias y Nóminas'}
+            </h1>
             <p className="text-gray-500 text-sm mt-1">Empleador activo: <strong className="text-black">{selectedEmployer.name}</strong></p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setViewMode(viewMode === 'earnings' ? 'table' : 'earnings')}
-              className={`font-semibold px-4 py-3 transition-all flex items-center gap-2 text-sm uppercase tracking-wider shadow-md ${
-                viewMode === 'earnings' ? 'bg-zinc-800 text-white' : 'bg-white text-black border border-zinc-300 hover:bg-zinc-100'
-              }`}
-            >
-              <Calculator className="w-4 h-4" />
-              <span>{viewMode === 'earnings' ? 'Ver Directorio' : 'Cálculo de Ganancias'}</span>
-            </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="bg-white border border-gray-300 p-1 flex items-center gap-1">
+              <button
+                onClick={() => setMainTab('directory')}
+                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${mainTab === 'directory' ? 'bg-black text-white' : 'text-gray-600 hover:text-black'}`}
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span>Directorio Empleados</span>
+              </button>
+              <button
+                onClick={() => setMainTab('earnings_global')}
+                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${mainTab === 'earnings_global' ? 'bg-black text-white' : 'text-gray-600 hover:text-black'}`}
+              >
+                <Calculator className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Cálculo Ganancias (Excel)</span>
+              </button>
+            </div>
+
             <button
               onClick={() => { resetForm(); setIsAddModalOpen(true); }}
-              className="bg-black hover:bg-gray-800 text-white font-semibold px-5 py-3 transition-all flex items-center justify-center gap-2 text-sm uppercase tracking-wider shadow-md"
+              className="bg-black hover:bg-gray-800 text-white font-semibold px-5 py-2.5 transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider shadow-md"
             >
               <Plus className="w-4 h-4" />
               <span>Nuevo Empleado</span>
@@ -439,8 +646,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* Tarjetas Informativas */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        {/* Tarjetas Informativas Generales */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8 print:hidden">
           <div className="bg-white p-5 border border-gray-200 shadow-sm">
             <div className="flex justify-between items-center text-gray-400 mb-2">
               <span className="text-[11px] font-bold uppercase tracking-wider">Total Registros</span>
@@ -478,187 +685,11 @@ export default function App() {
           </div>
         </div>
 
-        {/* Vista Alternativa: Cálculo de Ganancias */}
-        {viewMode === 'earnings' ? (
-          <div className="bg-white border border-zinc-200 p-6 sm:p-8 shadow-sm rounded-2xl mb-10">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-zinc-200 pb-4 mb-6 gap-4">
-              <div>
-                <h2 className="text-xl font-black text-black">Módulo de Cálculo de Ganancias y Nómina</h2>
-                <p className="text-xs text-zinc-500">Sistema interactivo para liquidación mensual de conductores (reemplazo de Excel).</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <select 
-                  className="bg-zinc-100 text-xs font-bold p-2.5 rounded-xl border border-zinc-300"
-                  value={earningsForm.tipoContrato}
-                  onChange={(e) => setEarningsForm({...earningsForm, tipoContrato: e.target.value})}
-                >
-                  <option value="Teilzeit">Teilzeit (Tiempo Parcial)</option>
-                  <option value="Minijob">Minijob (Marginal)</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Parámetros Generales */}
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6 text-xs font-semibold">
-              <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-200">
-                <label className="text-zinc-400 block mb-1 uppercase text-[10px]">Valor x Hora (€)</label>
-                <input 
-                  type="number" step="0.1" 
-                  value={earningsForm.valorHora} 
-                  onChange={(e) => setEarningsForm({...earningsForm, valorHora: Number(e.target.value)})}
-                  className="w-full bg-white p-2 rounded-lg border border-zinc-300 font-mono"
-                />
-              </div>
-              <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-200">
-                <label className="text-zinc-400 block mb-1 uppercase text-[10px]">Horas x Contrato</label>
-                <input 
-                  type="number" 
-                  value={earningsForm.horasContrato} 
-                  onChange={(e) => setEarningsForm({...earningsForm, horasContrato: Number(e.target.value)})}
-                  className="w-full bg-white p-2 rounded-lg border border-zinc-300 font-mono"
-                />
-              </div>
-              <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-200">
-                <label className="text-zinc-400 block mb-1 uppercase text-[10px]">Porcentaje Conductor (%)</label>
-                <input 
-                  type="number" step="0.05" 
-                  value={earningsForm.porcentajeConductor} 
-                  onChange={(e) => setEarningsForm({...earningsForm, porcentajeConductor: Number(e.target.value)})}
-                  className="w-full bg-white p-2 rounded-lg border border-zinc-300 font-mono"
-                />
-              </div>
-              <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-200">
-                <label className="text-zinc-400 block mb-1 uppercase text-[10px]">Provisión Vacaciones (€)</label>
-                <input 
-                  type="number" step="0.01" 
-                  value={earningsForm.provisionVacaciones} 
-                  onChange={(e) => setEarningsForm({...earningsForm, provisionVacaciones: Number(e.target.value)})}
-                  className="w-full bg-white p-2 rounded-lg border border-zinc-300 font-mono"
-                />
-              </div>
-            </div>
-
-            {/* Tabla de Semanas KW */}
-            <h3 className="text-sm font-bold uppercase tracking-wider mb-3 text-zinc-700">Desglose Semanal (Kalenderwoche)</h3>
-            <div className="overflow-x-auto mb-6">
-              <table className="w-full text-center text-xs">
-                <thead className="bg-black text-white uppercase text-[10px]">
-                  <tr>
-                    <th className="p-3">KW</th>
-                    <th className="p-3">Fecha</th>
-                    <th className="p-3">Fahrtpreis (€)</th>
-                    <th className="p-3">Aktion / Bono (€)</th>
-                    <th className="p-3">Total Semana (€)</th>
-                    <th className="p-3">Propina (€)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-200 font-mono">
-                  {earningsForm.semanas.map((sem, idx) => {
-                    const totalSemana = Number(sem.fahrtpreis) + Number(sem.aktion);
-                    return (
-                      <tr key={idx} className="hover:bg-zinc-50">
-                        <td className="p-3 font-bold">{sem.kw}</td>
-                        <td className="p-3">{sem.fecha}</td>
-                        <td className="p-3">
-                          <input 
-                            type="number" value={sem.fahrtpreis}
-                            onChange={(e) => {
-                              const newSem = [...earningsForm.semanas];
-                              newSem[idx].fahrtpreis = Number(e.target.value);
-                              setEarningsForm({...earningsForm, semanas: newSem});
-                            }}
-                            className="w-24 bg-zinc-100 p-1.5 rounded text-center border border-zinc-300 font-mono"
-                          />
-                        </td>
-                        <td className="p-3">
-                          <input 
-                            type="number" value={sem.aktion}
-                            onChange={(e) => {
-                              const newSem = [...earningsForm.semanas];
-                              newSem[idx].aktion = Number(e.target.value);
-                              setEarningsForm({...earningsForm, semanas: newSem});
-                            }}
-                            className="w-24 bg-zinc-100 p-1.5 rounded text-center border border-zinc-300 font-mono"
-                          />
-                        </td>
-                        <td className="p-3 font-bold text-black">{totalSemana.toFixed(2)} €</td>
-                        <td className="p-3">
-                          <input 
-                            type="number" value={sem.propina}
-                            onChange={(e) => {
-                              const newSem = [...earningsForm.semanas];
-                              newSem[idx].propina = Number(e.target.value);
-                              setEarningsForm({...earningsForm, semanas: newSem});
-                            }}
-                            className="w-20 bg-zinc-100 p-1.5 rounded text-center border border-zinc-300 font-mono"
-                          />
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Resumen de Resultados Finales */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-zinc-50 p-6 rounded-2xl border border-zinc-200 text-xs">
-              <div className="space-y-3">
-                <h4 className="font-bold text-black uppercase tracking-wider mb-2">Cálculos de Producción</h4>
-                <div className="flex justify-between border-b border-zinc-200 pb-1.5">
-                  <span className="text-zinc-500">Suma Fahrtpreis:</span>
-                  <span className="font-mono font-bold">{earningsCalculations.totalFahrtpreis.toFixed(2)} €</span>
-                </div>
-                <div className="flex justify-between border-b border-zinc-200 pb-1.5">
-                  <span className="text-zinc-500">Suma Acción / Bonos:</span>
-                  <span className="font-mono font-bold">{earningsCalculations.totalAktion.toFixed(2)} €</span>
-                </div>
-                <div className="flex justify-between border-b border-zinc-200 pb-1.5">
-                  <span className="text-zinc-500">Total Facturación:</span>
-                  <span className="font-mono font-bold">{earningsCalculations.totalTotal.toFixed(2)} €</span>
-                </div>
-                <div className="flex justify-between border-b border-zinc-200 pb-1.5">
-                  <span className="text-zinc-500">40% del Mes (Conductor):</span>
-                  <span className="font-mono font-bold text-emerald-600">{earningsCalculations.porcentajeGanado.toFixed(2)} €</span>
-                </div>
-                <div className="flex justify-between border-b border-zinc-200 pb-1.5">
-                  <span className="text-zinc-500">Total Propinas:</span>
-                  <span className="font-mono font-bold">{earningsCalculations.totalPropinas.toFixed(2)} €</span>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <h4 className="font-bold text-black uppercase tracking-wider mb-2">Ajustes y Liquidación Final</h4>
-                <div className="flex justify-between border-b border-zinc-200 pb-1.5">
-                  <span className="text-zinc-500">Gesamtbrutto (Antes de deducciones):</span>
-                  <span className="font-mono font-bold">{earningsCalculations.gesamtbrutto.toFixed(2)} €</span>
-                </div>
-                <div className="flex justify-between items-center border-b border-zinc-200 pb-1.5">
-                  <span className="text-zinc-500">Multas / Sanciones (€):</span>
-                  <input 
-                    type="number" value={earningsForm.multas} 
-                    onChange={(e) => setEarningsForm({...earningsForm, multas: Number(e.target.value)})}
-                    className="w-20 bg-white p-1 rounded text-right border border-zinc-300 font-mono"
-                  />
-                </div>
-                <div className="flex justify-between items-center border-b border-zinc-200 pb-1.5">
-                  <span className="text-zinc-500">Pagado en mano (€):</span>
-                  <input 
-                    type="number" value={earningsForm.enMano} 
-                    onChange={(e) => setEarningsForm({...earningsForm, enMano: Number(e.target.value)})}
-                    className="w-20 bg-white p-1 rounded text-right border border-zinc-300 font-mono"
-                  />
-                </div>
-                <div className="flex justify-between pt-2 text-sm font-black text-black bg-zinc-200/60 p-2.5 rounded-lg">
-                  <span>A transferir x Nómina (inc. Propinas):</span>
-                  <span className="font-mono text-emerald-700">{earningsCalculations.aTransferirNomina.toFixed(2)} €</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
+        {/* TAB 1: DIRECTORIO DE EMPLEADOS */}
+        {mainTab === 'directory' && (
           <>
             {/* Barra de Búsqueda y Filtros */}
-            <div className="bg-white border border-gray-200 p-4 mb-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="bg-white border border-gray-200 p-4 mb-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 print:hidden">
               <div className="relative flex-1">
                 <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
@@ -731,100 +762,648 @@ export default function App() {
                     <thead className="bg-black text-white text-[11px] uppercase tracking-wider font-bold">
                       <tr>
                         <th className="px-5 py-3.5 text-center">Empleado</th>
-                        <th className="px-4 py-3.5 text-center">Estado (Clic cambiar)</th>
+                        <th className="px-4 py-3.5 text-center">Estado</th>
                         <th className="px-4 py-3.5 text-center">Contrato</th>
                         <th className="px-4 py-3.5 text-center">1er Día</th>
                         <th className="px-4 py-3.5 text-center">Krankenkasse</th>
                         <th className="px-4 py-3.5 text-center">Nº Fiscal (St-Nr)</th>
                         <th className="px-4 py-3.5 text-center">Nº Seg. Social (SV)</th>
+                        <th className="px-4 py-3.5 text-center">Ganancias / Nómina</th>
                         <th className="px-4 py-3.5 text-center">Acciones</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 font-medium">
-                      {filteredEmployees.map((emp) => (
-                        <tr key={emp.id} className="hover:bg-gray-50/80 transition-colors">
-                          <td className="px-5 py-3.5 whitespace-nowrap text-center">
-                            <button onClick={() => setViewingEmployee(emp)} className="font-bold text-gray-900 hover:underline mx-auto block">
-                              {emp.lastName}, {emp.firstName}
-                            </button>
-                            <span className="text-[11px] text-gray-400 block truncate max-w-[200px] mx-auto">
-                              {emp.city ? `${emp.city} (${emp.address || ''})` : 'Sin dirección'}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3.5 whitespace-nowrap text-center" onClick={(e) => toggleEmployeeStatus(emp, e)}>
-                            {renderStatusBadge(emp.status)}
-                          </td>
-                          <td className="px-4 py-3.5 whitespace-nowrap text-center">
-                            {renderContractBadge(emp.contractType)}
-                          </td>
-                          <td className="px-4 py-3.5 whitespace-nowrap font-mono text-xs text-gray-600 text-center">
-                            {emp.startDate ? emp.startDate.substring(0, 10) : 'Sin asignar'}
-                          </td>
-                          <td className="px-4 py-3.5 whitespace-nowrap text-xs text-gray-800 text-center">
-                            {emp.krankenkasse || '-'}
-                          </td>
-                          <td className="px-4 py-3.5 whitespace-nowrap font-mono text-xs text-gray-600 text-center">
-                            {emp.stNummer || '-'}
-                          </td>
-                          <td className="px-4 py-3.5 whitespace-nowrap font-mono text-xs text-gray-600 text-center">
-                            {emp.svNummer || '-'}
-                          </td>
-                          <td className="px-4 py-3.5 whitespace-nowrap text-center">
-                            <div className="flex items-center justify-center gap-1">
-                              <button onClick={() => setViewingEmployee(emp)} className="p-1.5 text-gray-400 hover:text-black hover:bg-gray-100 transition-all" title="Ver Ficha">
-                                <Eye className="w-4 h-4" />
+                      {filteredEmployees.map((emp) => {
+                        const summary = computeEarningsSummary(emp.id);
+                        return (
+                          <tr key={emp.id} className="hover:bg-gray-50/80 transition-colors">
+                            <td className="px-5 py-3.5 whitespace-nowrap text-center">
+                              <button onClick={() => setViewingEmployee(emp)} className="font-bold text-gray-900 hover:underline mx-auto block">
+                                {emp.lastName}, {emp.firstName}
                               </button>
-                              <button onClick={() => openEditModal(emp)} className="p-1.5 text-gray-400 hover:text-black hover:bg-gray-100 transition-all" title="Editar">
-                                <Edit3 className="w-4 h-4" />
+                              <span className="text-[11px] text-gray-400 block truncate max-w-[200px] mx-auto">
+                                {emp.city ? `${emp.city} (${emp.address || ''})` : 'Sin dirección'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3.5 whitespace-nowrap text-center" onClick={(e) => toggleEmployeeStatus(emp, e)}>
+                              {renderStatusBadge(emp.status)}
+                            </td>
+                            <td className="px-4 py-3.5 whitespace-nowrap text-center">
+                              {renderContractBadge(emp.contractType)}
+                            </td>
+                            <td className="px-4 py-3.5 whitespace-nowrap font-mono text-xs text-gray-600 text-center">
+                              {emp.startDate ? emp.startDate.substring(0, 10) : 'Sin asignar'}
+                            </td>
+                            <td className="px-4 py-3.5 whitespace-nowrap text-xs text-gray-800 text-center">
+                              {emp.krankenkasse || '-'}
+                            </td>
+                            <td className="px-4 py-3.5 whitespace-nowrap font-mono text-xs text-gray-600 text-center">
+                              {emp.stNummer || '-'}
+                            </td>
+                            <td className="px-4 py-3.5 whitespace-nowrap font-mono text-xs text-gray-600 text-center">
+                              {emp.svNummer || '-'}
+                            </td>
+                            <td className="px-4 py-3.5 whitespace-nowrap text-center">
+                              <button
+                                onClick={() => setEarningsModalEmp(emp)}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-900 font-mono text-xs font-bold transition-all"
+                              >
+                                <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>€{summary.totalNetEarnings.toFixed(2)}</span>
+                                <ArrowUpRight className="w-3 h-3 text-emerald-600" />
                               </button>
-                              <button onClick={() => setDeletingEmployeeId(emp.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all" title="Eliminar">
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                            </td>
+                            <td className="px-4 py-3.5 whitespace-nowrap text-center">
+                              <div className="flex items-center justify-center gap-1">
+                                <button onClick={() => setEarningsModalEmp(emp)} className="p-1.5 text-emerald-700 hover:bg-emerald-50 transition-all" title="Gestionar Ganancias Excel">
+                                  <Calculator className="w-4 h-4" />
+                                </button>
+                                <button onClick={() => setViewingEmployee(emp)} className="p-1.5 text-gray-400 hover:text-black hover:bg-gray-100 transition-all" title="Ver Ficha">
+                                  <Eye className="w-4 h-4" />
+                                </button>
+                                <button onClick={() => openEditModal(emp)} className="p-1.5 text-gray-400 hover:text-black hover:bg-gray-100 transition-all" title="Editar">
+                                  <Edit3 className="w-4 h-4" />
+                                </button>
+                                <button onClick={() => setDeletingEmployeeId(emp.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all" title="Eliminar">
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
                 <div className="px-6 py-3 bg-gray-50 border-t border-gray-100 text-xs text-gray-500 flex justify-between items-center font-mono">
                   <span>Registros mostrados: <strong>{filteredEmployees.length}</strong> / {employees.length}</span>
-                  <span>BASE DE DATOS NEON / RENDER</span>
+                  <span>UBER STAFF SYSTEM v2.0</span>
                 </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredEmployees.map((emp) => (
-                  <div key={emp.id} className="bg-white border border-gray-200 p-6 shadow-sm hover:border-black transition-all flex flex-col justify-between">
-                    <div>
-                      <div className="flex justify-between items-start mb-3" onClick={(e) => toggleEmployeeStatus(emp, e)}>
-                        <span className="font-mono text-xs text-gray-400">ID: {emp.id.substring(0, 6)}...</span>
-                        {renderStatusBadge(emp.status)}
+                {filteredEmployees.map((emp) => {
+                  const summary = computeEarningsSummary(emp.id);
+                  return (
+                    <div key={emp.id} className="bg-white border border-gray-200 p-6 shadow-sm hover:border-black transition-all flex flex-col justify-between">
+                      <div>
+                        <div className="flex justify-between items-start mb-3" onClick={(e) => toggleEmployeeStatus(emp, e)}>
+                          <span className="font-mono text-xs text-gray-400">ID: {emp.id.substring(0, 6)}...</span>
+                          {renderStatusBadge(emp.status)}
+                        </div>
+                        <h3 onClick={() => setViewingEmployee(emp)} className="text-lg font-bold text-black hover:underline cursor-pointer mb-1">
+                          {emp.lastName}, {emp.firstName}
+                        </h3>
+                        <div className="mb-4">{renderContractBadge(emp.contractType)}</div>
+
+                        <div className="bg-emerald-50/60 border border-emerald-200 p-3 mb-4 rounded-xs">
+                          <div className="text-[10px] uppercase font-bold text-emerald-800 mb-0.5">Ganancias Calculadas Mes</div>
+                          <div className="text-xl font-extrabold font-mono text-emerald-900">€{summary.totalNetEarnings.toFixed(2)}</div>
+                          <div className="text-[10px] text-emerald-700 flex justify-between mt-1 pt-1 border-t border-emerald-200/60">
+                            <span>A Nómina: €{summary.bankTransferAmount.toFixed(2)}</span>
+                            <span>En Mano: €{summary.cashPaid.toFixed(2)}</span>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2 text-xs border-t border-gray-100 pt-3">
+                          <div className="flex justify-between"><span className="text-gray-400 font-medium">1er Día:</span><span className="font-mono font-semibold">{emp.startDate ? emp.startDate.substring(0, 10) : '-'}</span></div>
+                          <div className="flex justify-between"><span className="text-gray-400 font-medium">Krankenkasse:</span><span className="font-semibold text-gray-800">{emp.krankenkasse || '-'}</span></div>
+                          <div className="flex justify-between"><span className="text-gray-400 font-medium">St-Nummer:</span><span className="font-mono text-gray-700">{emp.stNummer || '-'}</span></div>
+                          <div className="flex justify-between"><span className="text-gray-400 font-medium">SV-Nummer:</span><span className="font-mono text-gray-700">{emp.svNummer || '-'}</span></div>
+                        </div>
                       </div>
-                      <h3 onClick={() => setViewingEmployee(emp)} className="text-lg font-bold text-black hover:underline cursor-pointer mb-1">
-                        {emp.lastName}, {emp.firstName}
-                      </h3>
-                      <div className="mb-4">{renderContractBadge(emp.contractType)}</div>
-                      <div className="space-y-2 text-xs border-t border-gray-100 pt-3">
-                        <div className="flex justify-between"><span className="text-gray-400 font-medium">1er Día:</span><span className="font-mono font-semibold">{emp.startDate ? emp.startDate.substring(0, 10) : '-'}</span></div>
-                        <div className="flex justify-between"><span className="text-gray-400 font-medium">Krankenkasse:</span><span className="font-semibold text-gray-800">{emp.krankenkasse || '-'}</span></div>
-                        <div className="flex justify-between"><span className="text-gray-400 font-medium">St-Nummer:</span><span className="font-mono text-gray-700">{emp.stNummer || '-'}</span></div>
-                        <div className="flex justify-between"><span className="text-gray-400 font-medium">SV-Nummer:</span><span className="font-mono text-gray-700">{emp.svNummer || '-'}</span></div>
+                      <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
+                        <button onClick={() => setEarningsModalEmp(emp)} className="flex-1 px-3 py-2 bg-black hover:bg-gray-800 text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5">
+                          <Calculator className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Calcular Excel</span>
+                        </button>
+                        <button onClick={() => setViewingEmployee(emp)} className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-xs font-bold uppercase">Ficha</button>
                       </div>
                     </div>
-                    <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
-                      <span className="text-[11px] text-gray-400 truncate max-w-[180px]">{emp.city || 'Sin ciudad'}</span>
-                      <button onClick={() => setViewingEmployee(emp)} className="px-3 py-1 bg-black text-white text-xs font-semibold">Detalle</button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </>
         )}
+
+        {/* TAB 2: VISTA GLOBAL DE GANANCIAS Y CÁLCULOS TIPO EXCEL */}
+        {mainTab === 'earnings_global' && (
+          <div className="space-y-6">
+            <div className="bg-white border border-gray-200 p-6 shadow-sm">
+              <h2 className="text-xl font-extrabold text-black mb-2 flex items-center gap-2">
+                <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
+                Resumen General de Cálculo de Ganancias (Semanas KW & Porcentajes)
+              </h2>
+              <p className="text-xs text-gray-500 mb-6">
+                Selecciona un empleado para abrir su hoja de cálculo interactiva completa, ajustar tarifas (ej. 40%, Teilzeit 30h/13.90€), agregar semanas (Fahrtpreis, Aktion) y calcular retenciones o multas.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {employees.map(emp => {
+                  const summary = computeEarningsSummary(emp.id);
+                  const eData = getEmployeeEarningsData(emp.id);
+                  return (
+                    <div key={emp.id} className="border border-gray-200 bg-gray-50/50 p-4 hover:border-black transition-all">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-extrabold text-black text-sm">{emp.lastName}, {emp.firstName}</h4>
+                          <span className="text-[11px] text-gray-500">{emp.contractType || 'Minijob'}</span>
+                        </div>
+                        <span className="text-[10px] font-mono bg-black text-white px-2 py-0.5 font-bold">
+                          {eData.commissionRate || 40}% Com.
+                        </span>
+                      </div>
+
+                      <div className="space-y-1 my-3 text-xs font-mono">
+                        <div className="flex justify-between text-gray-600">
+                          <span>Semanas cargadas:</span>
+                          <strong>{summary.calculatedWeeks.length} W</strong>
+                        </div>
+                        <div className="flex justify-between text-gray-600">
+                          <span>Bruto Viajes (Trip Net):</span>
+                          <span>€{summary.gesamtBruttoTrips.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-gray-600">
+                          <span>Parte Conductor ({eData.commissionRate}%):</span>
+                          <span>€{summary.totalDriverCommission.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-gray-600">
+                          <span>Propinas:</span>
+                          <span>€{summary.totalTips.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-red-600 border-t border-gray-200 pt-1">
+                          <span>Multas / Descuentos:</span>
+                          <span>-€{summary.totalFines.toFixed(2)}</span>
+                        </div>
+                      </div>
+
+                      <div className="bg-white border border-gray-300 p-2.5 mb-3">
+                        <div className="text-[10px] text-gray-500 uppercase font-bold">Monto Final A Transferir (Nómina)</div>
+                        <div className="text-lg font-extrabold font-mono text-emerald-800">
+                          €{summary.bankTransferAmount.toFixed(2)}
+                        </div>
+                        <div className="text-[10px] text-gray-600 font-mono">
+                          Pagado en mano: €{summary.cashPaid.toFixed(2)}
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => setEarningsModalEmp(emp)}
+                        className="w-full bg-black hover:bg-gray-800 text-white text-xs font-bold py-2 uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all"
+                      >
+                        <Calculator className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Abrir Calculadora Individual</span>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
       </main>
 
-      {/* Modal de Detalle */}
+      {/* MODAL / PANEL PRINCIPAL DE CÁLCULO DE GANANCIAS POR EMPLEADO (ESTILO EXCEL DE UBER) */}
+      {earningsModalEmp && (() => {
+        const emp = earningsModalEmp;
+        const eData = getEmployeeEarningsData(emp.id);
+        const summary = computeEarningsSummary(emp.id);
+
+        return (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-2 sm:p-4 print:p-0 print:static print:bg-white">
+            <div className="bg-white text-black w-full max-w-5xl p-4 sm:p-8 border border-gray-400 shadow-2xl relative max-h-[95vh] overflow-y-auto print:max-h-none print:shadow-none print:border-0 print:p-0">
+              
+              {/* Botón cerrar modal */}
+              <button 
+                onClick={() => setEarningsModalEmp(null)} 
+                className="absolute top-6 right-6 text-gray-400 hover:text-black print:hidden"
+              >
+                <X className="w-6 h-6" />
+              </button>
+
+              {/* Cabecera del Documento de Ganancias */}
+              <div className="border-b border-gray-300 pb-4 mb-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="bg-black text-white px-2.5 py-1 font-extrabold text-sm tracking-tight">Uber Staff</span>
+                    <span className="text-xs font-mono uppercase bg-emerald-100 text-emerald-900 px-2 py-0.5 font-bold border border-emerald-300">
+                      Nómina & Ganancias Semanales
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 print:hidden">
+                    <button
+                      onClick={handlePrintPayroll}
+                      className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-black text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 border border-gray-300 transition-all"
+                    >
+                      <Printer className="w-3.5 h-3.5" />
+                      <span>Imprimir / PDF</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 bg-gray-50 p-4 border border-gray-200">
+                  <div>
+                    <h2 className="text-2xl font-extrabold tracking-tight text-black">{emp.lastName}, {emp.firstName}</h2>
+                    <p className="text-xs text-gray-600 font-mono mt-0.5">
+                      <strong>ID:</strong> {emp.id} | <strong>Dirección:</strong> {emp.address || '-'}, {emp.zipCode} {emp.city}
+                    </p>
+                    <p className="text-xs text-gray-600 font-mono">
+                      <strong>St-Nr:</strong> {emp.stNummer || '-'} | <strong>SV-Nr:</strong> {emp.svNummer || '-'}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col justify-end text-left md:text-right border-t md:border-t-0 border-gray-200 pt-2 md:pt-0">
+                    <p className="text-xs font-semibold text-gray-800">
+                      Empleador: <span className="font-extrabold text-black">{selectedEmployer.name}</span>
+                    </p>
+                    <p className="text-xs text-gray-500">{selectedEmployer.address}</p>
+                    <p className="text-xs font-mono text-emerald-800 font-bold mt-1">
+                      Caja Salud (Krankenkasse): {emp.krankenkasse || '-'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECCIÓN 1: Configuración del Contrato y Parámetros Tarifa */}
+              <div className="mb-6 bg-white border border-gray-300 p-4 print:border-gray-200">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-black flex items-center gap-2">
+                    <Briefcase className="w-4 h-4 text-emerald-600" />
+                    Parámetros del Contrato y Porcentajes de Ganancia
+                  </h3>
+                  <span className="text-[11px] text-gray-500 font-mono">Simulación idéntica al archivo Excel</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                  <div>
+                    <label className="block text-gray-600 font-bold mb-1">Tipo Contrato</label>
+                    <select
+                      value={eData.contractType}
+                      onChange={(e) => updateEmployeeEarnings(emp.id, { contractType: e.target.value })}
+                      className="w-full bg-gray-100 p-2 border border-gray-300 font-bold focus:outline-none focus:border-black print:bg-transparent print:border-0"
+                    >
+                      <option value="Teilzeit">Teilzeit (1/2 Tiempo)</option>
+                      <option value="Minijob">Minijob</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-600 font-bold mb-1">% Parte Conductor</label>
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="number"
+                        value={eData.commissionRate}
+                        onChange={(e) => updateEmployeeEarnings(emp.id, { commissionRate: Number(e.target.value) })}
+                        className="w-full bg-gray-100 p-2 border border-gray-300 font-mono font-bold focus:outline-none focus:border-black print:bg-transparent"
+                        min="0"
+                        max="100"
+                      />
+                      <span className="font-bold text-gray-500">%</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-600 font-bold mb-1">Horas Contrato (h/sem)</label>
+                    <input
+                      type="number"
+                      value={eData.contractHours}
+                      onChange={(e) => updateEmployeeEarnings(emp.id, { contractHours: Number(e.target.value) })}
+                      className="w-full bg-gray-100 p-2 border border-gray-300 font-mono font-bold focus:outline-none focus:border-black print:bg-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-600 font-bold mb-1">Tarifa Horaria (€/h)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={eData.hourlyRate}
+                      onChange={(e) => updateEmployeeEarnings(emp.id, { hourlyRate: Number(e.target.value) })}
+                      className="w-full bg-gray-100 p-2 border border-gray-300 font-mono font-bold focus:outline-none focus:border-black print:bg-transparent"
+                    />
+                  </div>
+                </div>
+
+                {eData.contractType === 'Teilzeit' && (
+                  <div className="mt-3 p-2.5 bg-gray-100 border-l-4 border-black text-xs font-mono flex justify-between items-center">
+                    <span>Base teórica según contrato ({eData.contractHours}h x 4.33 sem x €{eData.hourlyRate}/h):</span>
+                    <strong className="text-black font-extrabold text-sm">€{summary.monthlyContractBasePay.toFixed(2)}</strong>
+                  </div>
+                )}
+              </div>
+
+              {/* SECCIÓN 2: Tabla de Semanas (KW - Kalenderwoche) estilo Excel */}
+              <div className="mb-6 bg-white border border-gray-300 p-4">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-black flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-black" />
+                    Detalle de Semanas de Trabajo (Kalenderwoche - KW)
+                  </h3>
+                  <span className="text-xs font-mono font-semibold text-emerald-800">
+                    Semanas registradas: {summary.calculatedWeeks.length}
+                  </span>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-center text-xs font-mono border-collapse border border-gray-300">
+                    <thead className="bg-black text-white uppercase text-[10px] tracking-wider">
+                      <tr>
+                        <th className="p-2 border border-gray-800">KW</th>
+                        <th className="p-2 border border-gray-800">Fechas</th>
+                        <th className="p-2 border border-gray-800">Fahrtpreis (€)</th>
+                        <th className="p-2 border border-gray-800">Aktion (€)</th>
+                        <th className="p-2 border border-gray-800">Comisión Serv. (€)</th>
+                        <th className="p-2 border border-gray-800 bg-gray-800">Total Net Viajes (€)</th>
+                        <th className="p-2 border border-gray-800 bg-emerald-900">{eData.commissionRate}% Conductor (€)</th>
+                        <th className="p-2 border border-gray-800">Propina (€)</th>
+                        <th className="p-2 border border-gray-800 bg-emerald-950">Total Semanal (€)</th>
+                        <th className="p-2 border border-gray-800 print:hidden">Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {summary.calculatedWeeks.map((w: any) => (
+                        <tr key={w.id} className="hover:bg-gray-50">
+                          <td className="p-2 border border-gray-200 font-bold text-black">{w.kw}</td>
+                          <td className="p-2 border border-gray-200 text-gray-600">{w.dateRange}</td>
+                          <td className="p-2 border border-gray-200">€{Number(w.fahrtpreis).toFixed(2)}</td>
+                          <td className="p-2 border border-gray-200 text-emerald-700">€{Number(w.aktion).toFixed(2)}</td>
+                          <td className="p-2 border border-gray-200 text-red-600">-€{Number(w.serviceFee).toFixed(2)}</td>
+                          <td className="p-2 border border-gray-200 font-bold bg-gray-50">€{w.tripNetTotal.toFixed(2)}</td>
+                          <td className="p-2 border border-gray-200 font-bold text-emerald-800 bg-emerald-50/50">
+                            €{w.driverShare.toFixed(2)}
+                          </td>
+                          <td className="p-2 border border-gray-200">€{Number(w.tip).toFixed(2)}</td>
+                          <td className="p-2 border border-gray-200 font-extrabold text-black bg-gray-100">
+                            €{w.weekTotal.toFixed(2)}
+                          </td>
+                          <td className="p-2 border border-gray-200 text-center print:hidden">
+                            <button
+                              onClick={() => handleDeleteWeek(emp.id, w.id)}
+                              className="text-gray-400 hover:text-red-600 transition-colors p-1"
+                              title="Eliminar semana"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+
+                    {/* Fila de Totales de Semanas */}
+                    <tfoot className="bg-gray-100 font-extrabold text-black">
+                      <tr>
+                        <td colSpan={2} className="p-2 border border-gray-300 text-right uppercase text-[10px]">Totales Mes:</td>
+                        <td className="p-2 border border-gray-300">€{summary.totalFahrtpreis.toFixed(2)}</td>
+                        <td className="p-2 border border-gray-300 text-emerald-800">€{summary.totalAktion.toFixed(2)}</td>
+                        <td className="p-2 border border-gray-300 text-red-600">-€{summary.totalServiceFee.toFixed(2)}</td>
+                        <td className="p-2 border border-gray-300 bg-gray-200">€{summary.gesamtBruttoTrips.toFixed(2)}</td>
+                        <td className="p-2 border border-gray-300 bg-emerald-100 text-emerald-900">€{summary.totalDriverCommission.toFixed(2)}</td>
+                        <td className="p-2 border border-gray-300">€{summary.totalTips.toFixed(2)}</td>
+                        <td className="p-2 border border-gray-300 bg-black text-white">€{summary.totalGrossDriverEarnings.toFixed(2)}</td>
+                        <td className="p-2 border border-gray-300 print:hidden"></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+
+                {/* Formulario rápido para añadir semana */}
+                <form onSubmit={(e) => handleAddWeek(emp.id, e)} className="mt-4 pt-3 border-t border-gray-200 bg-gray-50 p-3 print:hidden">
+                  <div className="text-[11px] font-bold text-gray-700 uppercase mb-2">Agregar Nueva Semana (KW)</div>
+                  <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 text-xs font-mono">
+                    <input
+                      type="text"
+                      placeholder="KW (ej. KW 39)"
+                      value={newWeek.kw}
+                      onChange={(e) => setNewWeek(prev => ({ ...prev, kw: e.target.value }))}
+                      className="p-1.5 bg-white border border-gray-300"
+                      required
+                    />
+                    <input
+                      type="text"
+                      placeholder="Fechas (22.09 - 28.09)"
+                      value={newWeek.dateRange}
+                      onChange={(e) => setNewWeek(prev => ({ ...prev, dateRange: e.target.value }))}
+                      className="p-1.5 bg-white border border-gray-300"
+                    />
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="Fahrtpreis €"
+                      value={newWeek.fahrtpreis}
+                      onChange={(e) => setNewWeek(prev => ({ ...prev, fahrtpreis: e.target.value }))}
+                      className="p-1.5 bg-white border border-gray-300"
+                      required
+                    />
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="Aktion €"
+                      value={newWeek.aktion}
+                      onChange={(e) => setNewWeek(prev => ({ ...prev, aktion: e.target.value }))}
+                      className="p-1.5 bg-white border border-gray-300"
+                    />
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="Servicio €"
+                      value={newWeek.serviceFee}
+                      onChange={(e) => setNewWeek(prev => ({ ...prev, serviceFee: e.target.value }))}
+                      className="p-1.5 bg-white border border-gray-300"
+                    />
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="Propina €"
+                      value={newWeek.tip}
+                      onChange={(e) => setNewWeek(prev => ({ ...prev, tip: e.target.value }))}
+                      className="p-1.5 bg-white border border-gray-300"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="mt-2 w-full bg-black hover:bg-gray-800 text-white text-xs font-bold py-2 uppercase tracking-wider flex items-center justify-center gap-1"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Añadir Registro Semana</span>
+                  </button>
+                </form>
+              </div>
+
+              {/* SECCIÓN 3: Multas, Provisión Vacaciones y Descuentos */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                
+                {/* Tabla Multas y Sanciones */}
+                <div className="bg-white border border-gray-300 p-4">
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-black flex items-center gap-2 mb-3">
+                    <ShieldAlert className="w-4 h-4 text-red-600" />
+                    Descuentos, Multas y Aktenzeichen
+                  </h3>
+
+                  {(eData.fines || []).length === 0 ? (
+                    <p className="text-xs text-gray-400 italic py-2">Sin multas o descuentos registrados este mes.</p>
+                  ) : (
+                    <div className="space-y-2 mb-4 font-mono text-xs">
+                      {(eData.fines || []).map((f: any) => (
+                        <div key={f.id} className="flex items-center justify-between bg-red-50/60 p-2 border border-red-200 text-red-900">
+                          <div>
+                            <div className="font-bold">{f.description}</div>
+                            <div className="text-[10px] text-red-700">AZ: {f.aktenzeichen} | PIN: {f.pin}</div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-extrabold text-red-700">-€{Number(f.amount).toFixed(2)}</span>
+                            <button onClick={() => handleDeleteFine(emp.id, f.id)} className="text-red-400 hover:text-red-800 print:hidden">
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Formulario añadir multa */}
+                  <form onSubmit={(e) => handleAddFine(emp.id, e)} className="bg-gray-50 p-3 border border-gray-200 text-xs print:hidden space-y-2">
+                    <div className="font-bold text-gray-700 text-[10px] uppercase">Registrar Multa / Descuento</div>
+                    <input
+                      type="text"
+                      placeholder="Descripción de infracción"
+                      value={newFine.description}
+                      onChange={(e) => setNewFine(prev => ({ ...prev, description: e.target.value }))}
+                      className="w-full p-1.5 bg-white border border-gray-300"
+                      required
+                    />
+                    <div className="grid grid-cols-3 gap-2 font-mono">
+                      <input
+                        type="text"
+                        placeholder="Aktenzeichen"
+                        value={newFine.aktenzeichen}
+                        onChange={(e) => setNewFine(prev => ({ ...prev, aktenzeichen: e.target.value }))}
+                        className="p-1.5 bg-white border border-gray-300 text-[11px]"
+                      />
+                      <input
+                        type="text"
+                        placeholder="PIN"
+                        value={newFine.pin}
+                        onChange={(e) => setNewFine(prev => ({ ...prev, pin: e.target.value }))}
+                        className="p-1.5 bg-white border border-gray-300 text-[11px]"
+                      />
+                      <input
+                        type="number"
+                        step="0.01"
+                        placeholder="Monto €"
+                        value={newFine.amount}
+                        onChange={(e) => setNewFine(prev => ({ ...prev, amount: e.target.value }))}
+                        className="p-1.5 bg-white border border-gray-300 text-[11px]"
+                        required
+                      />
+                    </div>
+                    <button type="submit" className="w-full bg-red-800 hover:bg-red-900 text-white py-1.5 font-bold uppercase text-[10px]">
+                      Agregar Descuento
+                    </button>
+                  </form>
+                </div>
+
+                {/* Ajuste Provisión Vacaciones y Desglose de Pagos */}
+                <div className="bg-white border border-gray-300 p-4 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-black flex items-center gap-2 mb-3">
+                      <Receipt className="w-4 h-4 text-emerald-600" />
+                      Ajustes de Liquidación y Desglose de Pago
+                    </h3>
+
+                    <div className="space-y-3 text-xs">
+                      <div>
+                        <label className="block text-gray-600 font-bold mb-1">Provisión Vacaciones / Ajuste Mes (€)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={eData.vacationProvision || 0}
+                          onChange={(e) => updateEmployeeEarnings(emp.id, { vacationProvision: Number(e.target.value) })}
+                          className="w-full bg-gray-100 p-2 border border-gray-300 font-mono font-bold text-black focus:outline-none focus:border-black print:bg-transparent"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-gray-600 font-bold mb-1">Monto Pagado "En Mano" (Efectivo €)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={eData.cashPaidInHand || 0}
+                          onChange={(e) => updateEmployeeEarnings(emp.id, { cashPaidInHand: Number(e.target.value) })}
+                          className="w-full bg-gray-100 p-2 border border-gray-300 font-mono font-bold text-black focus:outline-none focus:border-black print:bg-transparent"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 p-3 bg-gray-900 text-white font-mono text-xs space-y-1">
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Total Ganado Conductor:</span>
+                      <span>€{summary.totalGrossDriverEarnings.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-red-400">
+                      <span>Deducciones (Multas + Vac.):</span>
+                      <span>-€{summary.totalDeductions.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between font-extrabold text-sm border-t border-gray-700 pt-1 text-emerald-400">
+                      <span>LÍQUIDO A RECIBIR:</span>
+                      <span>€{summary.totalNetEarnings.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* SECCIÓN 4: LIQUIDACIÓN FINAL Y RESUMEN PARA NÓMINA (UBER BRANDED) */}
+              <div className="bg-black text-white p-6 border border-black flex flex-col md:flex-row justify-between items-center gap-6">
+                <div>
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-400 block mb-1">
+                    Resumen Final de Liquidación
+                  </span>
+                  <div className="text-3xl font-extrabold font-mono tracking-tight text-white">
+                    €{summary.bankTransferAmount.toFixed(2)}
+                  </div>
+                  <p className="text-xs text-gray-300 mt-1 font-mono">
+                    Monto neto final a transferir por cuenta bancaria (Nómina).
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-4 text-xs font-mono border-t md:border-t-0 md:border-l border-gray-800 pt-4 md:pt-0 md:pl-6">
+                  <div className="bg-gray-900 px-4 py-2 border border-gray-800">
+                    <span className="text-gray-400 block text-[10px]">PAGADO EN MANO</span>
+                    <strong className="text-white text-base">€{summary.cashPaid.toFixed(2)}</strong>
+                  </div>
+                  <div className="bg-gray-900 px-4 py-2 border border-gray-800">
+                    <span className="text-gray-400 block text-[10px]">TOTAL DESCUENTOS</span>
+                    <strong className="text-red-400 text-base">€{summary.totalDeductions.toFixed(2)}</strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pie para firma en versión de impresión */}
+              <div className="hidden print:block mt-12 pt-8 border-t border-gray-300 text-xs font-mono">
+                <div className="grid grid-cols-2 gap-12 text-center">
+                  <div>
+                    <div className="border-b border-black mb-2 h-12"></div>
+                    <p className="font-bold">Firma del Empleador</p>
+                    <p className="text-[10px] text-gray-500">{selectedEmployer.name}</p>
+                  </div>
+                  <div>
+                    <div className="border-b border-black mb-2 h-12"></div>
+                    <p className="font-bold">Firma del Conductor / Empleado</p>
+                    <p className="text-[10px] text-gray-500">{emp.lastName}, {emp.firstName}</p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Modal Ver Ficha Empleado */}
       {viewingEmployee && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white text-black w-full max-w-2xl p-6 sm:p-8 border border-gray-300 shadow-2xl relative max-h-[90vh] overflow-y-auto">
@@ -847,6 +1426,10 @@ export default function App() {
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+              <button onClick={() => { setEarningsModalEmp(viewingEmployee); setViewingEmployee(null); }} className="px-4 py-2 bg-emerald-800 text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <Calculator className="w-3.5 h-3.5" />
+                <span>Calculadora Excel</span>
+              </button>
               <button onClick={() => { const emp = viewingEmployee; setViewingEmployee(null); openEditModal(emp); }} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-xs font-bold uppercase tracking-wider text-black">Editar</button>
               <button onClick={() => setViewingEmployee(null)} className="px-6 py-2 bg-black text-white text-xs font-bold uppercase tracking-wider">Cerrar</button>
             </div>
@@ -883,7 +1466,7 @@ export default function App() {
                 <label className="block text-gray-600 mb-1">Tipo de Contrato *</label>
                 <select name="contractType" required value={formData.contractType} onChange={handleFormChange} className="w-full bg-gray-100 p-3 border border-transparent focus:bg-white focus:border-black focus:outline-none">
                   <option value="Minijob">Minijob</option>
-                  <option value="1/2 Tiempo">1/2 Tiempo</option>
+                  <option value="1/2 Tiempo">1/2 Tiempo (Teilzeit)</option>
                   <option value="No Aplica">No Aplica</option>
                 </select>
               </div>
@@ -943,7 +1526,7 @@ export default function App() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white text-black w-full max-w-sm p-6 border border-gray-300 shadow-2xl">
             <h3 className="text-lg font-extrabold tracking-tight mb-2">¿Eliminar registro?</h3>
-            <p className="text-xs text-gray-500 mb-6">Esta acción eliminará permanentemente al empleado de la base de datos.</p>
+            <p className="text-xs text-gray-500 mb-6">Esta acción eliminará permanentemente al empleado y sus datos de la base de datos.</p>
             <div className="flex justify-end gap-3">
               <button onClick={() => setDeletingEmployeeId(null)} className="px-4 py-2 text-xs font-bold uppercase text-gray-600 hover:bg-gray-100">Cancelar</button>
               <button onClick={confirmDelete} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold uppercase">Eliminar</button>

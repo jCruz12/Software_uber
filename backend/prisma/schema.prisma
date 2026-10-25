@@ -57,3 +57,18 @@ model AttachedDoc {
   fileUrl    String
   createdAt  DateTime @default(now())
 }
+
+model EmployeeEarnings {
+  id              String   @id @default(uuid())
+  employeeId      String   @unique
+  contractType    String   @default("Teilzeit")
+  contractHours   Float    @default(30)
+  hourlyRate      Float    @default(13.90)
+  commissionRate  Float    @default(40)
+  vacationProv    Float    @default(0)
+  cashPaidInHand  Float    @default(0)
+  weeksJson       String   // Almacena las semanas en formato JSON
+  finesJson       String   // Almacena las multas en formato JSON
+  employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  updatedAt       DateTime @updatedAt
+}
