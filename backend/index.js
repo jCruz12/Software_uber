@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import pkg from '@prisma/client';
 import pg from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
+import express from 'express';
 
 dotenv.config();
 
@@ -15,7 +16,14 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 const app = express();
-app.use(cors());
+
+// Configuración abierta de CORS para evitar bloqueos
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 
 // 1. Obtener todos los empleados de la base de datos

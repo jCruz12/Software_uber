@@ -8,7 +8,6 @@ const EMPLOYERS = [
   { id: '3', name: 'YottaHWattH HD2', address: 'Wangerowstraße 14, 69115 Heidelberg' },
 ];
 
-// URL de tu backend en Render (puedes cambiarlo por tu variable de entorno en Vercel)
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://software-uber.onrender.com';
 
 export default function Dashboard() {
@@ -35,7 +34,6 @@ export default function Dashboard() {
     city: ''
   });
 
-  // Cargar empleados desde el Backend / Base de Datos al iniciar
   const fetchEmployees = async () => {
     try {
       const res = await fetch(`${API_URL}/api/employees`);
@@ -52,7 +50,6 @@ export default function Dashboard() {
     fetchEmployees();
   }, []);
 
-  // Enviar nuevo empleado a la Base de Datos
   const handleCreateEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -69,7 +66,7 @@ export default function Dashboard() {
           startDate: '', birthDate: '', krankenkasse: '', stNummer: '',
           svNummer: '', address: '', zipCode: '', city: ''
         });
-        fetchEmployees(); // Recargar lista desde la BD
+        fetchEmployees();
       }
     } catch (error) {
       console.error('Error al crear empleado:', error);
@@ -117,7 +114,6 @@ export default function Dashboard() {
       </nav>
 
       <main className="max-w-7xl mx-auto px-6 py-10">
-        {/* Métricas */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="bg-white p-6 rounded-2xl border border-zinc-200/80 shadow-sm">
             <p className="text-xs font-bold uppercase text-zinc-400 tracking-wider">Total Empleados</p>
@@ -143,7 +139,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Tabla y Filtros */}
         <div className="bg-white rounded-2xl border border-zinc-200/80 p-4 mb-6 flex flex-col md:flex-row gap-4 justify-between items-center shadow-sm">
           <input
             type="text"
@@ -213,7 +208,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Modal de Creación */}
         {showCreateModal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-3xl max-w-2xl w-full p-8 shadow-2xl border border-zinc-200">
