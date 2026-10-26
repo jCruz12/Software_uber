@@ -10,7 +10,7 @@ export default function EarningsGlobalView({ employees, computeEarningsSummary, 
           Resumen General de Cálculo de Ganancias (Semanas KW & Porcentajes)
         </h2>
         <p className="text-xs text-gray-500 mb-6">
-          Selecciona un empleado para abrir su hoja de cálculo interactiva completa, ajustar tarifas (ej. 40%, Teilzeit 30h/13.90€), agregar semanas (Fahrtpreis, Aktion) y calcular retenciones o multas guardadas en Neon DB.
+          Selecciona un empleado para abrir su hoja de cálculo interactiva completa, ajustar tarifas (ej. 40%, Teilzeit 30h/13.90€), agregar semanas (Fahrtpreis, Aktion) y calcular retenciones o multas guardadas en DB.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -84,7 +84,7 @@ export default function EarningsModal({
               <Briefcase className="w-4 h-4 text-emerald-600" />
               Parámetros del Contrato y Porcentajes de Ganancia
             </h3>
-            <span className="text-[11px] text-gray-500 font-mono">Guardado en Neon DB</span>
+            <span className="text-[11px] text-gray-500 font-mono">Guardado en DB</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">

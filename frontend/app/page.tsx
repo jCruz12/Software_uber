@@ -506,7 +506,7 @@ export default function App() {
         
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 print:hidden">
           <div>
-            <div className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">Base de Datos Conectada (Neon DB) & Sistema de Nóminas</div>
+            <div className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">Base de Datos Conectada - Sistema de Nóminas</div>
             <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-black">
               {mainTab === 'directory' ? 'Gestión de Personal' : 'Control de Ganancias y Nóminas'}
             </h1>
