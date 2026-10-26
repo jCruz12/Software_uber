@@ -57,8 +57,8 @@ export default function ContractGeneratorModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-2 sm:p-4 print:fixed print:inset-0 print:bg-white print:p-0 print:m-0 print:z-[9999]">
-      <div className="bg-white text-black w-full max-w-5xl p-6 sm:p-10 border border-gray-400 shadow-2xl relative max-h-[95vh] overflow-y-auto print:max-h-none print:shadow-none print:border-0 print:p-8 print:w-full print:max-w-none print:overflow-visible">
+  <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-2 sm:p-4 print:fixed print:inset-0 print:bg-white print:p-0 print:m-0 print:z-[9999]">
+    <div className="bg-white text-black w-full max-w-5xl p-6 sm:p-10 border border-gray-400 shadow-2xl relative max-h-[95vh] overflow-y-auto print:max-h-none print:shadow-none print:border-0 print:p-0 print:w-full print:max-w-none print:overflow-visible">
         
       <button 
         onClick={onClose} 

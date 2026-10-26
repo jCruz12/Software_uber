@@ -26,9 +26,11 @@ body {
 }
 
 @media print {
+
   body * {
     visibility: hidden !important;
   }
+
   #payroll-document,
   #payroll-document * {
     visibility: visible !important;
@@ -51,6 +53,9 @@ body {
   #contract-document {
     position: static !important;
     width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
     margin: 0 !important;
     padding: 0 !important;
     background: white !important;
@@ -60,6 +65,11 @@ body {
   button, 
   .print\:hidden {
     display: none !important;
+  }
+
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
   }
 
   section, h4 {
