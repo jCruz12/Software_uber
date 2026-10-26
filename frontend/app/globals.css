@@ -29,7 +29,6 @@ body {
   body * {
     visibility: hidden !important;
   }
-
   #payroll-document,
   #payroll-document * {
     visibility: visible !important;
@@ -55,14 +54,15 @@ body {
     margin: 0 !important;
     padding: 0 !important;
     background: white !important;
-    font-size: 12px !important;
+    font-size: 11px !important;
   }
 
-  button, .print\:hidden {
+  button, 
+  .print\:hidden {
     display: none !important;
   }
 
-  section, h4, .font-sans {
+  section, h4 {
     break-inside: avoid;
     page-break-inside: avoid;
   }
