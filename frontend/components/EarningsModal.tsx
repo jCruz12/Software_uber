@@ -35,12 +35,8 @@ export default function EarningsModal({
           <X className="w-6 h-6" />
         </button>
 
-      {/* ========================================================================= */}
-      {/* CONTENEDOR PRINCIPAL DE IMPRESIÓN (INCLUYE DESDE CABECERA HASTA FIRMAS) */}
-      {/* ========================================================================= */}
       <div id="payroll-document" className="space-y-4 print:p-0 print:space-y-3">
         
-        {/* Cabecera con Nombre, Apellido y Datos del Empleado */}
         <div className="border-b border-gray-300 pb-3 mb-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-2 print:hidden">
             <div className="flex items-center gap-2">
@@ -83,8 +79,7 @@ export default function EarningsModal({
             </div>
           </div>
         </div>
-
-        {/* Parámetros del Contrato */}
+ 
         <div className="mb-4 bg-white border border-gray-300 p-3 print:border-gray-200">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs font-extrabold uppercase tracking-wider text-black flex items-center gap-2">
@@ -96,29 +91,17 @@ export default function EarningsModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
             <div>
-              <label className="block text-gray-600 font-bold mb-0.5">Tipo Contrato</label>
-              <select
-                value={eData.contractType}
-                onChange={(e) => updateEmployeeEarningsConfig(emp.id, { contractType: e.target.value })}
-                className="w-full bg-gray-100 p-1.5 border border-gray-300 font-bold focus:outline-none focus:border-black print:bg-transparent print:border-0"
-              >
-                <option value="Teilzeit">Teilzeit (1/2 Tiempo)</option>
-                <option value="Minijob">Minijob</option>
-              </select>
+              <span className="block text-gray-600 font-bold mb-0.5">Tipo Contrato</span>
+              <div className="w-full bg-gray-100 p-1.5 border border-gray-300 font-bold text-black flex items-center">
+                {eData.contractType === 'Teilzeit' ? 'Teilzeit (1/2 Tiempo)' : 'Minijob'}
+              </div>
             </div>
 
             <div>
-              <label className="block text-gray-600 font-bold mb-0.5">% Parte Conductor</label>
-              <div className="flex items-center gap-1">
-                <input
-                  type="number"
-                  value={eData.commissionRate}
-                  onChange={(e) => updateEmployeeEarningsConfig(emp.id, { commissionRate: Number(e.target.value) })}
-                  className="w-full bg-gray-100 p-1.5 border border-gray-300 font-mono font-bold focus:outline-none focus:border-black print:bg-transparent"
-                  min="0"
-                  max="100"
-                />
-                <span className="font-bold text-gray-500">%</span>
+              <span className="block text-gray-600 font-bold mb-0.5">% Parte Conductor</span>
+              <div className="w-full bg-gray-100 p-1.5 border border-gray-300 font-mono font-bold text-black flex items-center justify-between">
+                <span>{eData.commissionRate}</span>
+                <span className="text-gray-500">%</span>
               </div>
             </div>
 
@@ -128,7 +111,7 @@ export default function EarningsModal({
                 type="number"
                 value={eData.contractHours}
                 onChange={(e) => updateEmployeeEarningsConfig(emp.id, { contractHours: Number(e.target.value) })}
-                className="w-full bg-gray-100 p-1.5 border border-gray-300 font-mono font-bold focus:outline-none focus:border-black print:bg-transparent"
+                className="w-full bg-gray-50 p-1.5 border border-gray-300 font-mono font-bold focus:outline-none focus:border-black"
               />
             </div>
 
@@ -139,7 +122,7 @@ export default function EarningsModal({
                 step="0.01"
                 value={eData.hourlyRate}
                 onChange={(e) => updateEmployeeEarningsConfig(emp.id, { hourlyRate: Number(e.target.value) })}
-                className="w-full bg-gray-100 p-1.5 border border-gray-300 font-mono font-bold focus:outline-none focus:border-black print:bg-transparent"
+                className="w-full bg-gray-50 p-1.5 border border-gray-300 font-mono font-bold focus:outline-none focus:border-black"
               />
             </div>
           </div>
@@ -152,7 +135,6 @@ export default function EarningsModal({
           )}
         </div>
 
-        {/* Detalle de Semanas de Trabajo */}
         <div className="mb-4 bg-white border border-gray-300 p-3">
           <div className="flex justify-between items-center mb-2">
             <h3 className="text-xs font-extrabold uppercase tracking-wider text-black flex items-center gap-2">
@@ -287,7 +269,6 @@ export default function EarningsModal({
           </form>
         </div>
 
-        {/* Descuentos, Multas y Ajustes */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div className="bg-white border border-gray-300 p-3">
             <h3 className="text-xs font-extrabold uppercase tracking-wider text-black flex items-center gap-2 mb-2">
@@ -406,7 +387,6 @@ export default function EarningsModal({
           </div>
         </div>
 
-        {/* Resumen Final de Liquidación */}
         <div className="bg-black text-white p-4 border border-black flex flex-col md:flex-row justify-between items-center gap-4">
           <div>
             <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-400 block mb-0.5">
