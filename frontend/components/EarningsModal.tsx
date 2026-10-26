@@ -25,8 +25,8 @@ export default function EarningsModal({
   const summary = computeEarningsSummary(emp.id);
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-2 sm:p-4 print:p-0 print:static print:bg-white">
-      <div className="bg-white text-black w-full max-w-5xl p-4 sm:p-8 border border-gray-400 shadow-2xl relative max-h-[95vh] overflow-y-auto print:max-h-none print:shadow-none print:border-0 print:p-0">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-2 sm:p-4 print:fixed print:inset-0 print:bg-white print:p-0 print:z-[9999]">
+      <div className="bg-white text-black w-full max-w-5xl p-4 sm:p-8 border border-gray-400 shadow-2xl relative max-h-[95vh] overflow-y-auto print:max-h-none print:shadow-none print:border-0 print:p-0 print:w-full print:max-w-none">
         
         <button 
           onClick={() => setEarningsModalEmp(null)} 
@@ -40,7 +40,7 @@ export default function EarningsModal({
             <div className="flex items-center gap-2">
               <span className="bg-black text-white px-2.5 py-1 font-extrabold text-sm tracking-tight">Uber Staff</span>
               <span className="text-xs font-mono uppercase bg-emerald-100 text-emerald-900 px-2 py-0.5 font-bold border border-emerald-300">
-                Nómina & Ganancias Semanales (DB Connected)
+                Nómina & Ganancias Semanales
               </span>
             </div>
             

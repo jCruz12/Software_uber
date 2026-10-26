@@ -57,10 +57,9 @@ export default function ContractGeneratorModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-2 sm:p-4 print:p-0 print:static print:bg-white">
-      <div className="bg-white text-black w-full max-w-5xl p-6 sm:p-10 border border-gray-400 shadow-2xl relative max-h-[95vh] overflow-y-auto print:max-h-none print:shadow-none print:border-0 print:p-0">
-        
-        {/* Botón Cerrar */}
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-2 sm:p-4 print:fixed print:inset-0 print:bg-white print:p-0 print:z-[9999]">
+        <div className="bg-white text-black w-full max-w-5xl p-6 sm:p-10 border border-gray-400 shadow-2xl relative max-h-[95vh] overflow-y-auto print:max-h-none print:shadow-none print:border-0 print:p-0 print:w-full print:max-w-none">
+    
         <button 
           onClick={onClose} 
           className="absolute top-6 right-6 text-gray-400 hover:text-black print:hidden"
@@ -68,7 +67,6 @@ export default function ContractGeneratorModal({
           <X className="w-6 h-6" />
         </button>
 
-        {/* Panel de Configuración (Oculto al imprimir) */}
         <div className="bg-gray-50 border border-gray-300 p-5 mb-8 print:hidden">
           <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-200">
             <h3 className="text-sm font-extrabold uppercase tracking-wider text-black flex items-center gap-2">
