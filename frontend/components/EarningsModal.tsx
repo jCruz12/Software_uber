@@ -77,7 +77,7 @@ export default function EarningsModal({
             </div>
           </div>
         </div>
-      </div>
+
         <div className="mb-6 bg-white border border-gray-300 p-4 print:border-gray-200">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-xs font-extrabold uppercase tracking-wider text-black flex items-center gap-2">
@@ -438,7 +438,7 @@ export default function EarningsModal({
             </div>
           </div>
         </div>
-
+      </div>
       </div>
     </div>
   );
