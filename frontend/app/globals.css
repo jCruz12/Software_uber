@@ -25,7 +25,7 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-@media print {
+/*@media print {
   body * {
     visibility: hidden !important;
   }
@@ -50,6 +50,42 @@ body {
 
   @page {
     margin: 0.8cm;
+    size: A4 portrait;
+  }
+}
+*/
+@media print {
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  #contract-document,
+  #contract-document * {
+    visibility: visible !important;
+  }
+
+  #contract-document {
+    position: static !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+
+  button, 
+  .print\:hidden {
+    display: none !important;
+  }
+
+  section, h4, .font-sans {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  @page {
+    margin: 2cm;
     size: A4 portrait;
   }
 }
