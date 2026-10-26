@@ -16,7 +16,6 @@ const prisma = new PrismaClient({ adapter });
 
 const app = express();
 
-// Configuración abierta de CORS para evitar bloqueos
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -25,7 +24,6 @@ app.use(cors({
 
 app.use(express.json());
 
-// 1. Obtener todos los empleados de la base de datos
 app.get('/api/employees', async (req, res) => {
   try {
     const employees = await prisma.employee.findMany({
@@ -37,7 +35,6 @@ app.get('/api/employees', async (req, res) => {
   }
 });
 
-// 2. Crear un nuevo empleado en la base de datos
 app.post('/api/employees', async (req, res) => {
   try {
     const data = req.body;
@@ -72,6 +69,111 @@ app.patch('/api/employees/:id/status', async (req, res) => {
       data: { status }
     });
     res.json(updatedEmployee);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/employees/:id/earnings', async (req, res) => {
+  try {
+    const { id } = req.params;
+    let config = await prisma.employeeEarningsConfig.findUnique({ where: { employeeId: id } });
+    if (!config) {
+      config = await prisma.employeeEarningsConfig.create({
+        data: { employeeId: id }
+      });
+    }
+    const weeks = await prisma.employeeWeek.findMany({
+      where: { employeeId: id },
+      orderBy: { createdAt: 'asc' }
+    });
+    const fines = await prisma.employeeFine.findMany({
+      where: { employeeId: id },
+      orderBy: { createdAt: 'asc' }
+    });
+
+    res.json({ config, weeks, fines });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/employees/:id/earnings/config', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { contractType, contractHours, hourlyRate, commissionRate, vacationProvision, cashPaidInHand } = req.body;
+
+    const updated = await prisma.employeeEarningsConfig.upsert({
+      where: { employeeId: id },
+      update: { contractType, contractHours, hourlyRate, commissionRate, vacationProvision, cashPaidInHand },
+      create: { employeeId: id, contractType, contractHours, hourlyRate, commissionRate, vacationProvision, cashPaidInHand }
+    });
+
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/employees/:id/weeks', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { kw, dateRange, fahrtpreis, aktion, serviceFee, tip } = req.body;
+
+    const newWeek = await prisma.employeeWeek.create({
+      data: {
+        employeeId: id,
+        kw,
+        dateRange,
+        fahrtpreis: parseFloat(fahrtpreis) || 0,
+        aktion: parseFloat(aktion) || 0,
+        serviceFee: parseFloat(serviceFee) || 0,
+        tip: parseFloat(tip) || 0
+      }
+    });
+
+    res.json(newWeek);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/weeks/:weekId', async (req, res) => {
+  try {
+    const { weekId } = req.params;
+    await prisma.employeeWeek.delete({ where: { id: weekId } });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/employees/:id/fines', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { description, aktenzeichen, pin, amount } = req.body;
+
+    const newFine = await prisma.employeeFine.create({
+      data: {
+        employeeId: id,
+        description,
+        aktenzeichen,
+        pin,
+        amount: parseFloat(amount) || 0
+      }
+    });
+
+    res.json(newFine);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/fines/:fineId', async (req, res) => {
+  try {
+    const { fineId } = req.params;
+    await prisma.employeeFine.delete({ where: { id: fineId } });
+    res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

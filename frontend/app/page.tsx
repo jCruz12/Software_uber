@@ -23,12 +23,9 @@ import {
   Calendar,
   FileSpreadsheet,
   Printer,
-  TrendingUp,
   Receipt,
   ArrowUpRight,
-  ShieldAlert,
-  Percent,
-  CheckCircle2
+  ShieldAlert
 } from 'lucide-react';
 
 const EMPLOYERS = [
@@ -38,28 +35,6 @@ const EMPLOYERS = [
 ];
 
 const API_URL = 'https://software-uber.onrender.com';
-
-// Mock initial state for demo / backend fallback with sample calculation data matching the sheet logic
-const INITIAL_EARNINGS_DATA: Record<string, any> = {
-  // Keyed by employee id or default fallback
-  default: {
-    contractType: 'Teilzeit', // 'Teilzeit' or 'Minijob'
-    contractHours: 30,
-    hourlyRate: 13.90,
-    commissionRate: 40, // 40%
-    vacationProvision: 0,
-    weeks: [
-      { id: 'kw35', kw: 'KW 35', dateRange: '24.08 - 31.08', fahrtpreis: 850.50, aktion: 45.00, serviceFee: 212.60, tip: 35.00 },
-      { id: 'kw36', kw: 'KW 36', dateRange: '01.09 - 07.09', fahrtpreis: 920.00, aktion: 60.00, serviceFee: 230.00, tip: 42.50 },
-      { id: 'kw37', kw: 'KW 37', dateRange: '08.09 - 14.09', fahrtpreis: 780.20, aktion: 30.00, serviceFee: 195.00, tip: 28.00 },
-      { id: 'kw38', kw: 'KW 38', dateRange: '15.09 - 21.09', fahrtpreis: 910.80, aktion: 50.00, serviceFee: 227.70, tip: 50.00 },
-    ],
-    fines: [
-      { id: 'f1', description: 'Exceso de velocidad - Heidelberg', aktenzeichen: 'AZ-2026-8891', pin: '4892', amount: 35.00 },
-    ],
-    cashPaidInHand: 450.00, // En mano
-  }
-};
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -88,8 +63,8 @@ export default function App() {
   // Modal / View specifically for Employee Earnings & Payroll
   const [earningsModalEmp, setEarningsModalEmp] = useState<any>(null);
   
-  // Earnings State per Employee
-  const [earningsDataMap, setEarningsDataMap] = useState<Record<string, any>>(INITIAL_EARNINGS_DATA);
+  // Earnings State per Employee (Guardado dinámicamente desde la BD)
+  const [earningsDataMap, setEarningsDataMap] = useState<Record<string, any>>({});
 
   // New Week Input State
   const [newWeek, setNewWeek] = useState({
@@ -132,15 +107,35 @@ export default function App() {
       const data = await res.json();
       if (Array.isArray(data)) {
         setEmployees(data);
+        // Cargar ganancias reales de cada empleado desde la BD
+        data.forEach((emp: any) => fetchEmployeeEarnings(emp.id));
       }
     } catch (error) {
       console.error('Error cargando empleados:', error);
-      // Fallback data if offline or backend unavailable
-      setEmployees([
-        { id: 'emp-1', firstName: 'Carlos', lastName: 'Mendoza', status: 'Activo', contractType: '1/2 Tiempo', startDate: '2025-01-15', krankenkasse: 'AOK Baden-Württemberg', stNummer: '123/456/789', svNummer: '65 120590 M 012', city: 'Heidelberg', address: 'Hauptstraße 12', zipCode: '69117' },
-        { id: 'emp-2', firstName: 'Elena', lastName: 'García', status: 'Activo', contractType: 'Minijob', startDate: '2025-03-01', krankenkasse: 'TK Techniker', stNummer: '987/654/321', svNummer: '72 180495 G 044', city: 'Mannheim', address: 'Quadrat O4 8', zipCode: '68161' },
-        { id: 'emp-3', firstName: 'Stefan', lastName: 'Müller', status: 'Activo', contractType: '1/2 Tiempo', startDate: '2024-11-10', krankenkasse: 'Barmer', stNummer: '456/789/123', svNummer: '14 020988 M 099', city: 'Edingen-Neckarhausen', address: 'Jahnstr. 15', zipCode: '68535' },
-      ]);
+    }
+  };
+
+  // Cargar datos reales de ganancias, semanas y multas desde la BD
+  const fetchEmployeeEarnings = async (empId: string) => {
+    try {
+      const res = await fetch(`${API_URL}/api/employees/${empId}/earnings`);
+      const data = await res.json();
+      
+      setEarningsDataMap(prev => ({
+        ...prev,
+        [empId]: {
+          contractType: data.config?.contractType || 'Teilzeit',
+          contractHours: data.config?.contractHours || 30,
+          hourlyRate: data.config?.hourlyRate || 13.90,
+          commissionRate: data.config?.commissionRate || 40,
+          vacationProvision: data.config?.vacationProvision || 0,
+          cashPaidInHand: data.config?.cashPaidInHand || 0,
+          weeks: data.weeks || [],
+          fines: data.fines || []
+        }
+      }));
+    } catch (error) {
+      console.error('Error al cargar ganancias reales de BD:', error);
     }
   };
 
@@ -191,7 +186,7 @@ export default function App() {
 
   // Earnings helper functions
   const getEmployeeEarningsData = (empId: string) => {
-    return earningsDataMap[empId] || earningsDataMap['default'] || {
+    return earningsDataMap[empId] || {
       contractType: 'Teilzeit',
       contractHours: 30,
       hourlyRate: 13.90,
@@ -203,32 +198,46 @@ export default function App() {
     };
   };
 
-  const updateEmployeeEarnings = (empId: string, newData: any) => {
+  // Guardar cambios de configuración en la BD
+  const updateEmployeeEarningsConfig = async (empId: string, updatedFields: any) => {
+    const currentData = getEmployeeEarningsData(empId);
+    const merged = { ...currentData, ...updatedFields };
+
     setEarningsDataMap(prev => ({
       ...prev,
-      [empId]: {
-        ...getEmployeeEarningsData(empId),
-        ...newData
-      }
+      [empId]: merged
     }));
+
+    try {
+      await fetch(`${API_URL}/api/employees/${empId}/earnings/config`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contractType: merged.contractType,
+          contractHours: Number(merged.contractHours),
+          hourlyRate: Number(merged.hourlyRate),
+          commissionRate: Number(merged.commissionRate),
+          vacationProvision: Number(merged.vacationProvision),
+          cashPaidInHand: Number(merged.cashPaidInHand)
+        })
+      });
+    } catch (error) {
+      console.error('Error al sincronizar configuración con la BD:', error);
+    }
   };
 
   // Calculations logic matching Excel sheets
   const computeEarningsSummary = (empId: string) => {
     const data = getEmployeeEarningsData(empId);
     
-    // Calculate totals for each week
     const calculatedWeeks = data.weeks.map((w: any) => {
       const fahrtpreis = Number(w.fahrtpreis) || 0;
       const aktion = Number(w.aktion) || 0;
       const serviceFee = Number(w.serviceFee) || 0;
       const tip = Number(w.tip) || 0;
 
-      // Net trip revenue before driver commission
       const tripNetTotal = fahrtpreis + aktion - serviceFee;
-      // Driver's portion (usually 40%)
       const driverShare = tripNetTotal * (data.commissionRate / 100);
-      // Total earned this week (Share + Tips)
       const weekTotal = driverShare + tip;
 
       return {
@@ -248,17 +257,12 @@ export default function App() {
     const totalDriverCommission = gesamtBruttoTrips * (data.commissionRate / 100);
     const totalGrossDriverEarnings = totalDriverCommission + totalTips;
 
-    // Fines / Deductions
     const totalFines = (data.fines || []).reduce((acc: number, f: any) => acc + (Number(f.amount) || 0), 0);
-
-    // Contract calculation for Teilzeit (Hourly threshold vs commission)
     const monthlyContractBasePay = (Number(data.contractHours) || 0) * 4.33 * (Number(data.hourlyRate) || 0);
 
-    // Net adjustments
     const totalDeductions = totalFines + (Number(data.vacationProvision) || 0);
     const totalNetEarnings = Math.max(0, totalGrossDriverEarnings - totalDeductions);
 
-    // Split between Bank Transfer (Nómina) and Cash In Hand (En mano)
     const cashPaid = Number(data.cashPaidInHand) || 0;
     const bankTransferAmount = Math.max(0, totalNetEarnings - cashPaid);
 
@@ -280,71 +284,87 @@ export default function App() {
     };
   };
 
-  // Handlers for Earnings modification
-  const handleAddWeek = (empId: string, e: React.FormEvent) => {
+  // Añadir semana directo a la BD
+  const handleAddWeek = async (empId: string, e: React.FormEvent) => {
     e.preventDefault();
-    const currentData = getEmployeeEarningsData(empId);
-    const weekEntry = {
-      id: `kw-${Date.now()}`,
-      kw: newWeek.kw || 'KW',
-      dateRange: newWeek.dateRange || 'Rango de fechas',
-      fahrtpreis: Number(newWeek.fahrtpreis) || 0,
-      aktion: Number(newWeek.aktion) || 0,
-      serviceFee: Number(newWeek.serviceFee) || 0,
-      tip: Number(newWeek.tip) || 0,
-    };
+    try {
+      const res = await fetch(`${API_URL}/api/employees/${empId}/weeks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          kw: newWeek.kw || 'KW',
+          dateRange: newWeek.dateRange || '',
+          fahrtpreis: Number(newWeek.fahrtpreis) || 0,
+          aktion: Number(newWeek.aktion) || 0,
+          serviceFee: Number(newWeek.serviceFee) || 0,
+          tip: Number(newWeek.tip) || 0
+        })
+      });
 
-    updateEmployeeEarnings(empId, {
-      weeks: [...currentData.weeks, weekEntry]
-    });
-
-    setNewWeek({
-      kw: `KW ${currentData.weeks.length + 36}`,
-      dateRange: '',
-      fahrtpreis: '',
-      aktion: '',
-      serviceFee: '',
-      tip: ''
-    });
+      if (res.ok) {
+        fetchEmployeeEarnings(empId);
+        setNewWeek({
+          kw: 'KW 39',
+          dateRange: '',
+          fahrtpreis: '',
+          aktion: '',
+          serviceFee: '',
+          tip: ''
+        });
+      }
+    } catch (error) {
+      console.error('Error al guardar semana en la BD:', error);
+    }
   };
 
-  const handleDeleteWeek = (empId: string, weekId: string) => {
-    const currentData = getEmployeeEarningsData(empId);
-    updateEmployeeEarnings(empId, {
-      weeks: currentData.weeks.filter((w: any) => w.id !== weekId)
-    });
+  // Eliminar semana de la BD
+  const handleDeleteWeek = async (empId: string, weekId: string) => {
+    try {
+      const res = await fetch(`${API_URL}/api/weeks/${weekId}`, { method: 'DELETE' });
+      if (res.ok) {
+        fetchEmployeeEarnings(empId);
+      }
+    } catch (error) {
+      console.error('Error al eliminar semana de la BD:', error);
+    }
   };
 
-  const handleAddFine = (empId: string, e: React.FormEvent) => {
+  // Añadir multa directo a la BD
+  const handleAddFine = async (empId: string, e: React.FormEvent) => {
     e.preventDefault();
     if (!newFine.description || !newFine.amount) return;
-    
-    const currentData = getEmployeeEarningsData(empId);
-    const fineEntry = {
-      id: `fine-${Date.now()}`,
-      description: newFine.description,
-      aktenzeichen: newFine.aktenzeichen || '-',
-      pin: newFine.pin || '-',
-      amount: Number(newFine.amount) || 0
-    };
 
-    updateEmployeeEarnings(empId, {
-      fines: [...(currentData.fines || []), fineEntry]
-    });
+    try {
+      const res = await fetch(`${API_URL}/api/employees/${empId}/fines`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          description: newFine.description,
+          aktenzeichen: newFine.aktenzeichen || '-',
+          pin: newFine.pin || '-',
+          amount: Number(newFine.amount) || 0
+        })
+      });
 
-    setNewFine({
-      description: '',
-      aktenzeichen: '',
-      pin: '',
-      amount: ''
-    });
+      if (res.ok) {
+        fetchEmployeeEarnings(empId);
+        setNewFine({ description: '', aktenzeichen: '', pin: '', amount: '' });
+      }
+    } catch (error) {
+      console.error('Error al guardar multa en la BD:', error);
+    }
   };
 
-  const handleDeleteFine = (empId: string, fineId: string) => {
-    const currentData = getEmployeeEarningsData(empId);
-    updateEmployeeEarnings(empId, {
-      fines: (currentData.fines || []).filter((f: any) => f.id !== fineId)
-    });
+  // Eliminar multa de la BD
+  const handleDeleteFine = async (empId: string, fineId: string) => {
+    try {
+      const res = await fetch(`${API_URL}/api/fines/${fineId}`, { method: 'DELETE' });
+      if (res.ok) {
+        fetchEmployeeEarnings(empId);
+      }
+    } catch (error) {
+      console.error('Error al eliminar multa de la BD:', error);
+    }
   };
 
   // Employee Form handlers
@@ -366,19 +386,9 @@ export default function App() {
         setIsAddModalOpen(false);
         resetForm();
         fetchEmployees();
-      } else {
-        // Fallback local add
-        const newEmp = { id: `emp-${Date.now()}`, ...formData };
-        setEmployees(prev => [newEmp, ...prev]);
-        setIsAddModalOpen(false);
-        resetForm();
       }
     } catch (error) {
       console.error('Error al crear empleado:', error);
-      const newEmp = { id: `emp-${Date.now()}`, ...formData };
-      setEmployees(prev => [newEmp, ...prev]);
-      setIsAddModalOpen(false);
-      resetForm();
     }
   };
 
@@ -414,16 +424,9 @@ export default function App() {
         setEditingEmployee(null);
         resetForm();
         fetchEmployees();
-      } else {
-        setEmployees(prev => prev.map(emp => emp.id === editingEmployee.id ? { ...emp, ...formData } : emp));
-        setEditingEmployee(null);
-        resetForm();
       }
     } catch (error) {
       console.error('Error al actualizar empleado:', error);
-      setEmployees(prev => prev.map(emp => emp.id === editingEmployee.id ? { ...emp, ...formData } : emp));
-      setEditingEmployee(null);
-      resetForm();
     }
   };
 
@@ -438,7 +441,7 @@ export default function App() {
       });
       fetchEmployees();
     } catch (error) {
-      setEmployees(prev => prev.map(item => item.id === emp.id ? { ...item, status: newStatus } : item));
+      console.error('Error al actualizar estado:', error);
     }
   };
 
@@ -446,13 +449,13 @@ export default function App() {
     if (deletingEmployeeId) {
       try {
         await fetch(`${API_URL}/api/employees/${deletingEmployeeId}`, { method: 'DELETE' });
+        setEmployees(prev => prev.filter(e => e.id !== deletingEmployeeId));
+        setDeletingEmployeeId(null);
+        if (viewingEmployee?.id === deletingEmployeeId) setViewingEmployee(null);
+        if (earningsModalEmp?.id === deletingEmployeeId) setEarningsModalEmp(null);
       } catch (error) {
         console.error('Error al eliminar empleado:', error);
       }
-      setEmployees(prev => prev.filter(e => e.id !== deletingEmployeeId));
-      setDeletingEmployeeId(null);
-      if (viewingEmployee?.id === deletingEmployeeId) setViewingEmployee(null);
-      if (earningsModalEmp?.id === deletingEmployeeId) setEarningsModalEmp(null);
     }
   };
 
@@ -501,7 +504,6 @@ export default function App() {
     }
   };
 
-  // Printable Payroll View trigger
   const handlePrintPayroll = () => {
     window.print();
   };
@@ -560,7 +562,6 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#F6F6F6] text-black flex flex-col font-sans print:bg-white print:text-black">
       
-      {/* Barra de Navegación Principal */}
       <nav className="bg-black text-white px-6 py-4 sticky top-0 z-30 border-b border-gray-800 print:hidden">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-8">
@@ -605,13 +606,11 @@ export default function App() {
         </div>
       </nav>
 
-      {/* Contenido Principal */}
       <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-8 flex-1 print:p-0 print:max-w-none">
         
-        {/* Cabecera y Pestañas de Navegación */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 print:hidden">
           <div>
-            <div className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">Base de Datos Conectada & Sistema de Nóminas</div>
+            <div className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">Base de Datos Conectada (Neon DB) & Sistema de Nóminas</div>
             <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-black">
               {mainTab === 'directory' ? 'Gestión de Personal' : 'Control de Ganancias y Nóminas'}
             </h1>
@@ -646,7 +645,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* Tarjetas Informativas Generales */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8 print:hidden">
           <div className="bg-white p-5 border border-gray-200 shadow-sm">
             <div className="flex justify-between items-center text-gray-400 mb-2">
@@ -685,10 +683,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* TAB 1: DIRECTORIO DE EMPLEADOS */}
         {mainTab === 'directory' && (
           <>
-            {/* Barra de Búsqueda y Filtros */}
             <div className="bg-white border border-gray-200 p-4 mb-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 print:hidden">
               <div className="relative flex-1">
                 <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -745,7 +741,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Tabla Centrada */}
             {filteredEmployees.length === 0 ? (
               <div className="bg-white border border-gray-200 p-12 text-center my-8">
                 <AlertCircle className="w-10 h-10 text-gray-300 mx-auto mb-3" />
@@ -837,7 +832,7 @@ export default function App() {
                 </div>
                 <div className="px-6 py-3 bg-gray-50 border-t border-gray-100 text-xs text-gray-500 flex justify-between items-center font-mono">
                   <span>Registros mostrados: <strong>{filteredEmployees.length}</strong> / {employees.length}</span>
-                  <span>UBER STAFF SYSTEM v2.0</span>
+                  <span>NEON DB PERSISTENT STORAGE</span>
                 </div>
               </div>
             ) : (
@@ -887,7 +882,6 @@ export default function App() {
           </>
         )}
 
-        {/* TAB 2: VISTA GLOBAL DE GANANCIAS Y CÁLCULOS TIPO EXCEL */}
         {mainTab === 'earnings_global' && (
           <div className="space-y-6">
             <div className="bg-white border border-gray-200 p-6 shadow-sm">
@@ -896,7 +890,7 @@ export default function App() {
                 Resumen General de Cálculo de Ganancias (Semanas KW & Porcentajes)
               </h2>
               <p className="text-xs text-gray-500 mb-6">
-                Selecciona un empleado para abrir su hoja de cálculo interactiva completa, ajustar tarifas (ej. 40%, Teilzeit 30h/13.90€), agregar semanas (Fahrtpreis, Aktion) y calcular retenciones o multas.
+                Selecciona un empleado para abrir su hoja de cálculo interactiva completa, ajustar tarifas (ej. 40%, Teilzeit 30h/13.90€), agregar semanas (Fahrtpreis, Aktion) y calcular retenciones o multas guardadas en Neon DB.
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -965,7 +959,6 @@ export default function App() {
 
       </main>
 
-      {/* MODAL / PANEL PRINCIPAL DE CÁLCULO DE GANANCIAS POR EMPLEADO (ESTILO EXCEL DE UBER) */}
       {earningsModalEmp && (() => {
         const emp = earningsModalEmp;
         const eData = getEmployeeEarningsData(emp.id);
@@ -975,7 +968,6 @@ export default function App() {
           <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-2 sm:p-4 print:p-0 print:static print:bg-white">
             <div className="bg-white text-black w-full max-w-5xl p-4 sm:p-8 border border-gray-400 shadow-2xl relative max-h-[95vh] overflow-y-auto print:max-h-none print:shadow-none print:border-0 print:p-0">
               
-              {/* Botón cerrar modal */}
               <button 
                 onClick={() => setEarningsModalEmp(null)} 
                 className="absolute top-6 right-6 text-gray-400 hover:text-black print:hidden"
@@ -983,13 +975,12 @@ export default function App() {
                 <X className="w-6 h-6" />
               </button>
 
-              {/* Cabecera del Documento de Ganancias */}
               <div className="border-b border-gray-300 pb-4 mb-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-2">
                   <div className="flex items-center gap-2">
                     <span className="bg-black text-white px-2.5 py-1 font-extrabold text-sm tracking-tight">Uber Staff</span>
                     <span className="text-xs font-mono uppercase bg-emerald-100 text-emerald-900 px-2 py-0.5 font-bold border border-emerald-300">
-                      Nómina & Ganancias Semanales
+                      Nómina & Ganancias Semanales (DB Connected)
                     </span>
                   </div>
                   
@@ -1027,14 +1018,13 @@ export default function App() {
                 </div>
               </div>
 
-              {/* SECCIÓN 1: Configuración del Contrato y Parámetros Tarifa */}
               <div className="mb-6 bg-white border border-gray-300 p-4 print:border-gray-200">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-xs font-extrabold uppercase tracking-wider text-black flex items-center gap-2">
                     <Briefcase className="w-4 h-4 text-emerald-600" />
                     Parámetros del Contrato y Porcentajes de Ganancia
                   </h3>
-                  <span className="text-[11px] text-gray-500 font-mono">Simulación idéntica al archivo Excel</span>
+                  <span className="text-[11px] text-gray-500 font-mono">Guardado en Neon DB</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
@@ -1042,7 +1032,7 @@ export default function App() {
                     <label className="block text-gray-600 font-bold mb-1">Tipo Contrato</label>
                     <select
                       value={eData.contractType}
-                      onChange={(e) => updateEmployeeEarnings(emp.id, { contractType: e.target.value })}
+                      onChange={(e) => updateEmployeeEarningsConfig(emp.id, { contractType: e.target.value })}
                       className="w-full bg-gray-100 p-2 border border-gray-300 font-bold focus:outline-none focus:border-black print:bg-transparent print:border-0"
                     >
                       <option value="Teilzeit">Teilzeit (1/2 Tiempo)</option>
@@ -1056,7 +1046,7 @@ export default function App() {
                       <input
                         type="number"
                         value={eData.commissionRate}
-                        onChange={(e) => updateEmployeeEarnings(emp.id, { commissionRate: Number(e.target.value) })}
+                        onChange={(e) => updateEmployeeEarningsConfig(emp.id, { commissionRate: Number(e.target.value) })}
                         className="w-full bg-gray-100 p-2 border border-gray-300 font-mono font-bold focus:outline-none focus:border-black print:bg-transparent"
                         min="0"
                         max="100"
@@ -1070,7 +1060,7 @@ export default function App() {
                     <input
                       type="number"
                       value={eData.contractHours}
-                      onChange={(e) => updateEmployeeEarnings(emp.id, { contractHours: Number(e.target.value) })}
+                      onChange={(e) => updateEmployeeEarningsConfig(emp.id, { contractHours: Number(e.target.value) })}
                       className="w-full bg-gray-100 p-2 border border-gray-300 font-mono font-bold focus:outline-none focus:border-black print:bg-transparent"
                     />
                   </div>
@@ -1081,7 +1071,7 @@ export default function App() {
                       type="number"
                       step="0.01"
                       value={eData.hourlyRate}
-                      onChange={(e) => updateEmployeeEarnings(emp.id, { hourlyRate: Number(e.target.value) })}
+                      onChange={(e) => updateEmployeeEarningsConfig(emp.id, { hourlyRate: Number(e.target.value) })}
                       className="w-full bg-gray-100 p-2 border border-gray-300 font-mono font-bold focus:outline-none focus:border-black print:bg-transparent"
                     />
                   </div>
@@ -1095,7 +1085,6 @@ export default function App() {
                 )}
               </div>
 
-              {/* SECCIÓN 2: Tabla de Semanas (KW - Kalenderwoche) estilo Excel */}
               <div className="mb-6 bg-white border border-gray-300 p-4">
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="text-xs font-extrabold uppercase tracking-wider text-black flex items-center gap-2">
@@ -1152,7 +1141,6 @@ export default function App() {
                       ))}
                     </tbody>
 
-                    {/* Fila de Totales de Semanas */}
                     <tfoot className="bg-gray-100 font-extrabold text-black">
                       <tr>
                         <td colSpan={2} className="p-2 border border-gray-300 text-right uppercase text-[10px]">Totales Mes:</td>
@@ -1169,9 +1157,8 @@ export default function App() {
                   </table>
                 </div>
 
-                {/* Formulario rápido para añadir semana */}
                 <form onSubmit={(e) => handleAddWeek(emp.id, e)} className="mt-4 pt-3 border-t border-gray-200 bg-gray-50 p-3 print:hidden">
-                  <div className="text-[11px] font-bold text-gray-700 uppercase mb-2">Agregar Nueva Semana (KW)</div>
+                  <div className="text-[11px] font-bold text-gray-700 uppercase mb-2">Agregar Nueva Semana (KW) a la Base de Datos</div>
                   <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 text-xs font-mono">
                     <input
                       type="text"
@@ -1227,15 +1214,13 @@ export default function App() {
                     className="mt-2 w-full bg-black hover:bg-gray-800 text-white text-xs font-bold py-2 uppercase tracking-wider flex items-center justify-center gap-1"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>Añadir Registro Semana</span>
+                    <span>Guardar Semana en BD</span>
                   </button>
                 </form>
               </div>
 
-              {/* SECCIÓN 3: Multas, Provisión Vacaciones y Descuentos */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 
-                {/* Tabla Multas y Sanciones */}
                 <div className="bg-white border border-gray-300 p-4">
                   <h3 className="text-xs font-extrabold uppercase tracking-wider text-black flex items-center gap-2 mb-3">
                     <ShieldAlert className="w-4 h-4 text-red-600" />
@@ -1243,7 +1228,7 @@ export default function App() {
                   </h3>
 
                   {(eData.fines || []).length === 0 ? (
-                    <p className="text-xs text-gray-400 italic py-2">Sin multas o descuentos registrados este mes.</p>
+                    <p className="text-xs text-gray-400 italic py-2">Sin multas o descuentos registrados en la BD.</p>
                   ) : (
                     <div className="space-y-2 mb-4 font-mono text-xs">
                       {(eData.fines || []).map((f: any) => (
@@ -1263,9 +1248,8 @@ export default function App() {
                     </div>
                   )}
 
-                  {/* Formulario añadir multa */}
                   <form onSubmit={(e) => handleAddFine(emp.id, e)} className="bg-gray-50 p-3 border border-gray-200 text-xs print:hidden space-y-2">
-                    <div className="font-bold text-gray-700 text-[10px] uppercase">Registrar Multa / Descuento</div>
+                    <div className="font-bold text-gray-700 text-[10px] uppercase">Registrar Multa / Descuento en BD</div>
                     <input
                       type="text"
                       placeholder="Descripción de infracción"
@@ -1300,12 +1284,11 @@ export default function App() {
                       />
                     </div>
                     <button type="submit" className="w-full bg-red-800 hover:bg-red-900 text-white py-1.5 font-bold uppercase text-[10px]">
-                      Agregar Descuento
+                      Guardar Descuento en BD
                     </button>
                   </form>
                 </div>
 
-                {/* Ajuste Provisión Vacaciones y Desglose de Pagos */}
                 <div className="bg-white border border-gray-300 p-4 flex flex-col justify-between">
                   <div>
                     <h3 className="text-xs font-extrabold uppercase tracking-wider text-black flex items-center gap-2 mb-3">
@@ -1320,7 +1303,7 @@ export default function App() {
                           type="number"
                           step="0.01"
                           value={eData.vacationProvision || 0}
-                          onChange={(e) => updateEmployeeEarnings(emp.id, { vacationProvision: Number(e.target.value) })}
+                          onChange={(e) => updateEmployeeEarningsConfig(emp.id, { vacationProvision: Number(e.target.value) })}
                           className="w-full bg-gray-100 p-2 border border-gray-300 font-mono font-bold text-black focus:outline-none focus:border-black print:bg-transparent"
                         />
                       </div>
@@ -1331,7 +1314,7 @@ export default function App() {
                           type="number"
                           step="0.01"
                           value={eData.cashPaidInHand || 0}
-                          onChange={(e) => updateEmployeeEarnings(emp.id, { cashPaidInHand: Number(e.target.value) })}
+                          onChange={(e) => updateEmployeeEarningsConfig(emp.id, { cashPaidInHand: Number(e.target.value) })}
                           className="w-full bg-gray-100 p-2 border border-gray-300 font-mono font-bold text-black focus:outline-none focus:border-black print:bg-transparent"
                         />
                       </div>
@@ -1356,7 +1339,6 @@ export default function App() {
 
               </div>
 
-              {/* SECCIÓN 4: LIQUIDACIÓN FINAL Y RESUMEN PARA NÓMINA (UBER BRANDED) */}
               <div className="bg-black text-white p-6 border border-black flex flex-col md:flex-row justify-between items-center gap-6">
                 <div>
                   <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-400 block mb-1">
@@ -1382,7 +1364,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Pie para firma en versión de impresión */}
               <div className="hidden print:block mt-12 pt-8 border-t border-gray-300 text-xs font-mono">
                 <div className="grid grid-cols-2 gap-12 text-center">
                   <div>
@@ -1403,7 +1384,6 @@ export default function App() {
         );
       })()}
 
-      {/* Modal Ver Ficha Empleado */}
       {viewingEmployee && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white text-black w-full max-w-2xl p-6 sm:p-8 border border-gray-300 shadow-2xl relative max-h-[90vh] overflow-y-auto">
@@ -1437,7 +1417,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Modal Crear / Editar */}
       {(isAddModalOpen || editingEmployee) && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white text-black w-full max-w-2xl p-6 sm:p-8 border border-gray-300 shadow-2xl relative max-h-[90vh] overflow-y-auto">
@@ -1521,7 +1500,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Modal Confirmar Eliminación */}
       {deletingEmployeeId && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white text-black w-full max-w-sm p-6 border border-gray-300 shadow-2xl">
