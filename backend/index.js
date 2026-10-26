@@ -115,6 +115,33 @@ app.put('/api/employees/:id/earnings/config', async (req, res) => {
   }
 });
 
+app.put('/api/employees/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const data = req.body;
+    const updatedEmployee = await prisma.employee.update({
+      where: { id },
+      data: {
+        lastName: data.lastName,
+        firstName: data.firstName,
+        status: data.status,
+        contractType: data.contractType,
+        startDate: data.startDate ? new Date(data.startDate) : null,
+        birthDate: data.birthDate ? new Date(data.birthDate) : null,
+        krankenkasse: data.krankenkasse,
+        stNummer: data.stNummer,
+        svNummer: data.svNummer,
+        address: data.address,
+        zipCode: data.zipCode,
+        city: data.city
+      }
+    });
+    res.json(updatedEmployee);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/api/employees/:id/weeks', async (req, res) => {
   try {
     const { id } = req.params;
