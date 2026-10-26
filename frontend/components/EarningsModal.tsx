@@ -424,8 +424,6 @@ export default function EarningsModal({
               <p className="text-[10px] text-gray-500">{emp.lastName}, {emp.firstName}</p>
             </div>
           </div>
-
-
       </div>
       </div>
     </div>

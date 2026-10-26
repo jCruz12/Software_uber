@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, X, List, LayoutGrid, AlertCircle, DollarSign, ArrowUpRight, Calculator, Eye, Edit3, Trash2, FileText } from 'lucide-react';
+import { Search, X, List, LayoutGrid, AlertCircle, DollarSign, ArrowUpRight, Calculator, Eye, Edit3, Trash2, FileText, Download } from 'lucide-react';
 
 export default function EmployeeDirectory({
   filteredEmployees,
@@ -22,9 +22,59 @@ export default function EmployeeDirectory({
   renderContractBadge,
   setContractModalEmp
 }: any) {
+
+  const exportToExcel = () => {
+    if (filteredEmployees.length === 0) return;
+
+    const headers = [
+      "Empleado",
+      "Estado",
+      "Tipo Contrato",
+      "1er Dia",
+      "Seguro Medico (Krankenkasse)",
+      "Numero Fiscal (St-Nummer)",
+      "Numero Seg. Social (SV-Nummer)",
+      "Ganancias Totales (€)",
+      "Pago por Banco (€)",
+      "Pago en Mano (€)"
+    ];
+
+    const rows = filteredEmployees.map((emp: any) => {
+      const summary = computeEarningsSummary(emp.id);
+      const fullName = `"${emp.lastName}, ${emp.firstName}"`;
+      const startDate = emp.startDate ? emp.startDate.substring(0, 10) : '';
+      const krankenkasse = `"${emp.krankenkasse || ''}"`;
+      const stNummer = `"${emp.stNummer || ''}"`;
+      const svNummer = `"${emp.svNummer || ''}"`;
+
+      return [
+        fullName,
+        emp.status,
+        emp.contractType,
+        startDate,
+        krankenkasse,
+        stNummer,
+        svNummer,
+        (summary?.totalNetEarnings || 0).toFixed(2),
+        (summary?.bankTransferAmount || 0).toFixed(2),
+        (summary?.cashPaid || 0).toFixed(2)
+      ].join(",");
+    });
+
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Reporte_Empleados_${new Date().toISOString().substring(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <>
-      <div className="bg-white border border-gray-200 p-4 mb-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 print:hidden">
+      <div className="bg-white border border-gray-200 p-4 mb-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 print:hidden">
         <div className="relative flex-1">
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -80,6 +130,38 @@ export default function EmployeeDirectory({
         </div>
       </div>
 
+      <div className="bg-emerald-50 border border-emerald-200 p-3 mb-6 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs font-mono shadow-sm">
+        <div className="flex items-center gap-2">
+          <span className="bg-emerald-800 text-white font-bold px-2 py-0.5 uppercase tracking-wider text-[10px]">
+            Resumen Filtrado
+          </span>
+          <span className="text-gray-700">
+            Mostrando <strong className="text-black">{filteredEmployees.length}</strong> empleados en pantalla
+          </span>
+        </div>
+
+        <div className="flex items-center gap-4 flex-wrap justify-end">
+          <div>
+            <span className="text-gray-500 text-[11px]">Suma Nóminas (Filtradas): </span>
+            <strong className="text-emerald-900 text-sm font-extrabold font-mono">
+              €{filteredEmployees.reduce((acc: number, emp: any) => {
+                const summary = computeEarningsSummary(emp.id);
+                return acc + (summary?.totalNetEarnings || 0);
+              }, 0).toFixed(2)}
+            </strong>
+          </div>
+
+          <button
+            onClick={exportToExcel}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-sans text-xs font-bold uppercase tracking-wider transition-all shadow-xs"
+            title="Exportar datos filtrados a Excel (.csv)"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Exportar Excel</span>
+          </button>
+        </div>
+      </div>
+
       {filteredEmployees.length === 0 ? (
         <div className="bg-white border border-gray-200 p-12 text-center my-8">
           <AlertCircle className="w-10 h-10 text-gray-300 mx-auto mb-3" />
@@ -119,7 +201,7 @@ export default function EmployeeDirectory({
                           {emp.city ? `${emp.city} (${emp.address || ''})` : 'Sin dirección'}
                         </span>
                       </td>
-                      <td className="px-4 py-3.5 whitespace-nowrap text-center" onClick={(e) => toggleEmployeeStatus(emp, e)}>
+                      <td className="px-4 py-3.5 whitespace-nowrap text-center cursor-pointer" onClick={(e) => toggleEmployeeStatus(emp, e)}>
                         {renderStatusBadge(emp.status)}
                       </td>
                       <td className="px-4 py-3.5 whitespace-nowrap text-center">
@@ -183,7 +265,7 @@ export default function EmployeeDirectory({
             return (
               <div key={emp.id} className="bg-white border border-gray-200 p-6 shadow-sm hover:border-black transition-all flex flex-col justify-between">
                 <div>
-                  <div className="flex justify-between items-start mb-3" onClick={(e) => toggleEmployeeStatus(emp, e)}>
+                  <div className="flex justify-between items-start mb-3 cursor-pointer" onClick={(e) => toggleEmployeeStatus(emp, e)}>
                     <span className="font-mono text-xs text-gray-400">ID: {emp.id.substring(0, 6)}...</span>
                     {renderStatusBadge(emp.status)}
                   </div>
@@ -214,15 +296,14 @@ export default function EmployeeDirectory({
                     <span>Calcular Excel</span>
                   </button>
                   <button onClick={() => setViewingEmployee(emp)} className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-xs font-bold uppercase">Ficha</button>
-                
-                    <button 
-                        onClick={() => setContractModalEmp(emp)} 
-                        className="px-3 py-2 bg-emerald-800 text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1"
-                        title="Generar Contrato"
-                        >
-                        <FileText className="w-3.5 h-3.5" />
-                        <span>Contrato</span>
-                        </button>
+                  <button 
+                    onClick={() => setContractModalEmp(emp)} 
+                    className="px-3 py-2 bg-emerald-800 text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1"
+                    title="Generar Contrato"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>Contrato</span>
+                  </button>
                 </div>
               </div>
             );

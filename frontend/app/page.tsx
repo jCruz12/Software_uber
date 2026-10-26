@@ -69,7 +69,7 @@ export default function App() {
     startDate: '',
     birthDate: '',
     krankenkasse: '',
-    marginalEmp: '-',
+    marginalEmp: '',
     stNummer: '',
     svNummer: '',
     address: '',
@@ -349,7 +349,7 @@ export default function App() {
       startDate: emp.startDate ? emp.startDate.substring(0, 10) : '',
       birthDate: emp.birthDate ? emp.birthDate.substring(0, 10) : '',
       krankenkasse: emp.krankenkasse || '',
-      marginalEmp: emp.marginalEmp || '-',
+      marginalEmp: emp.marginalEmp || '',
       stNummer: emp.stNummer || '',
       svNummer: emp.svNummer || '',
       address: emp.address || '',
@@ -409,7 +409,7 @@ export default function App() {
   const resetForm = () => {
     setFormData({
       firstName: '', lastName: '', status: 'Activo', contractType: 'Minijob',
-      startDate: '', birthDate: '', krankenkasse: '', marginalEmp: '-',
+      startDate: '', birthDate: '', krankenkasse: '', marginalEmp: '',
       stNummer: '', svNummer: '', address: '', zipCode: '', city: ''
     });
   };
