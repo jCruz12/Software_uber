@@ -27,12 +27,6 @@ body {
 
 @media print {
 
-  body, html {
-    background: white !important;
-    height: auto !important;
-    overflow: visible !important;
-  }
-
   body * {
     visibility: hidden !important;
   }
@@ -51,7 +45,6 @@ body {
     font-size: 10px !important; 
   }
 
-
   #contract-document,
   #contract-document * {
     visibility: visible !important;
@@ -59,7 +52,6 @@ body {
 
   #contract-document {
     position: static !important;
-    display: block !important;
     width: 100% !important;
     height: auto !important;
     max-height: none !important;
@@ -67,14 +59,17 @@ body {
     margin: 0 !important;
     padding: 0 !important;
     background: white !important;
-    font-size: 12px !important;
+    font-size: 11px !important;
   }
 
   button, 
-  .print\:hidden,
-  .fixed,
-  .absolute {
+  .print\:hidden {
     display: none !important;
+  }
+
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
   }
 
   section, h4 {
@@ -83,7 +78,7 @@ body {
   }
 
   @page {
-    margin: 2cm;
+    margin: 1.5cm;
     size: A4 portrait;
   }
 }
