@@ -432,7 +432,6 @@ export default function EarningsModal({
           </div>
         </div>
 
-        <div className="mt-8 pt-6 border-t text-xs font-mono">
           <div className="grid grid-cols-2 gap-12 text-center">
             <div>
               <div className="border-b border-black mb-1 h-10"></div>
@@ -445,7 +444,7 @@ export default function EarningsModal({
               <p className="text-[10px] text-gray-500">{emp.lastName}, {emp.firstName}</p>
             </div>
           </div>
-        </div>
+
 
       </div>
       </div>
