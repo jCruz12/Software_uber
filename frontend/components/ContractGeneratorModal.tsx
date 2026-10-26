@@ -57,7 +57,7 @@ export default function ContractGeneratorModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-2 sm:p-4 print:fixed print:inset-0 print:bg-white print:p-0 print:m-0 print:z-[9999]">
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-2 sm:p-4 print:fixed print:inset-0 print:bg-white print:p-0 print:m-0 print:z-[9999]">
         <div className="bg-white text-black w-full max-w-5xl p-6 sm:p-10 border border-gray-400 shadow-2xl relative max-h-[95vh] overflow-y-auto print:max-h-none print:shadow-none print:border-0 print:p-8 print:w-full print:max-w-none print:overflow-visible">
     
         <button 
@@ -135,10 +135,7 @@ export default function ContractGeneratorModal({
           </div>
         </div>
 
-        {/* ========================================================================= */}
-        {/* DOCUMENTO OFICIAL DE CONTRATO (SEGÚN FORMATO PROPORCIONADO) */}
-        {/* ========================================================================= */}
-        <div className="font-serif text-sm leading-relaxed text-black p-4 sm:p-8 border border-gray-200 space-y-6">
+        <div id="contract-document" className="font-serif text-sm leading-relaxed text-black p-4 sm:p-8 border border-gray-200 space-y-6 print:p-0 print:border-0">
           
           <div className="text-center mb-6 pb-4 border-b-2 border-black">
             <h1 className="text-xl font-extrabold uppercase tracking-tight">ARBEITSVERTRAG</h1>
