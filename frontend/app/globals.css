@@ -29,21 +29,25 @@ body {
   body * {
     visibility: hidden;
   }
-  
-  .fixed.inset-0.bg-black\/70,
-  .fixed.inset-0.bg-black\/70 *,
-  .print\:static,
-  .print\:static * {
+
+  .print\:fixed,
+  .print\:fixed * {
     visibility: visible;
   }
 
-  .fixed.inset-0.bg-black\/70 {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    margin: 0;
-    padding: 0;
+  .print\:fixed {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: auto !important;
     background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  section, .space-y-6 > * {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 }
