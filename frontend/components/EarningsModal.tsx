@@ -432,8 +432,7 @@ export default function EarningsModal({
           </div>
         </div>
 
-        {/* Firmas al pie (Ahora dentro de #payroll-document para salir en la misma hoja) */}
-        <div className="mt-8 pt-6 border-t border-gray-300 text-xs font-mono">
+        <div className="mt-8 pt-6 border-t text-xs font-mono">
           <div className="grid grid-cols-2 gap-12 text-center">
             <div>
               <div className="border-b border-black mb-1 h-10"></div>
