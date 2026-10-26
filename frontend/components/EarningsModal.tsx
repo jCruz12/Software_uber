@@ -62,7 +62,7 @@ export default function EarningsModal({
                 <strong>ID:</strong> {emp.id} | <strong>Dirección:</strong> {emp.address || '-'}, {emp.zipCode} {emp.city}
               </p>
               <p className="text-xs text-gray-600 font-mono">
-                <strong>St-Nr:</strong> {emp.stNummer || '-'} | <strong>SV-Nr:</strong> {emp.svNummer || '-'}
+                <strong>Numero identificacion fiscal:</strong> {emp.stNummer || '-'} | <strong>Número de seguridad social:</strong> {emp.svNummer || '-'}
               </p>
             </div>
 
@@ -72,7 +72,7 @@ export default function EarningsModal({
               </p>
               <p className="text-xs text-gray-500">{selectedEmployer.address}</p>
               <p className="text-xs font-mono text-emerald-800 font-bold mt-1">
-                Caja Salud (Krankenkasse): {emp.krankenkasse || '-'}
+                Seguro medico : {emp.krankenkasse || '-'}
               </p>
             </div>
           </div>

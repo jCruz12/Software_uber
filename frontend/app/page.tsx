@@ -9,6 +9,7 @@ import EarningsModal from '@/components/EarningsModal';
 import EmployeeViewModal from '@/components/EmployeeViewModal';
 import EmployeeFormModal from '@/components/EmployeeFormModal';
 import { Users, Calculator, Plus, ChevronRight } from 'lucide-react';
+import ContractGeneratorModal from '@/components/ContractGeneratorModal';
 
 const EMPLOYERS = [
   { id: '1', name: 'Luis Jorge Gama Maldonado', address: 'Jahnstr. 20, 68535 – Edingen Neckarhausen' },
@@ -41,6 +42,8 @@ export default function App() {
   const [earningsModalEmp, setEarningsModalEmp] = useState<any>(null);
   
   const [earningsDataMap, setEarningsDataMap] = useState<Record<string, any>>({});
+
+  const [contractModalEmp, setContractModalEmp] = useState<any>(null);
 
   const [newWeek, setNewWeek] = useState({
     kw: 'KW 39',
@@ -444,7 +447,7 @@ export default function App() {
         <header className="max-w-6xl w-full mx-auto flex justify-between items-center">
           <div className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <span className="bg-white text-black px-2.5 py-0.5 font-extrabold text-xl tracking-tighter">Uber</span>
-            <span className="font-light tracking-normal text-gray-300">Staff & Payroll</span>
+            <span className="font-light tracking-normal text-gray-300">Staff</span>
           </div>
           <span className="text-xs tracking-widest uppercase text-gray-400 font-medium">Portal de Empleados & Nóminas</span>
         </header>
@@ -484,7 +487,7 @@ export default function App() {
             </form>
           </div>
         </main>
-        <footer className="text-center text-xs text-gray-500">© {currentYear} Uber Technologies Inc. Gestión de Empleados.</footer>
+        <footer className="text-center text-xs text-gray-500">© {currentYear} J-C Software Inc. Gestión de Empleados.</footer>
       </div>
     );
   }
@@ -560,6 +563,7 @@ export default function App() {
             setDeletingEmployeeId={setDeletingEmployeeId}
             renderStatusBadge={renderStatusBadge}
             renderContractBadge={renderContractBadge}
+            setContractModalEmp={setContractModalEmp}
           />
         )}
 
@@ -611,6 +615,12 @@ export default function App() {
         handleFormChange={handleFormChange}
         handleCreateEmployee={handleCreateEmployee}
         handleUpdateEmployee={handleUpdateEmployee}
+      />
+      <ContractGeneratorModal
+        isOpen={!!contractModalEmp}
+        onClose={() => setContractModalEmp(null)}
+        employee={contractModalEmp}
+        selectedEmployer={selectedEmployer}
       />
 
       {deletingEmployeeId && (

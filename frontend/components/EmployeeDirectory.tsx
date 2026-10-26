@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, X, List, LayoutGrid, AlertCircle, DollarSign, ArrowUpRight, Calculator, Eye, Edit3, Trash2 } from 'lucide-react';
+import { Search, X, List, LayoutGrid, AlertCircle, DollarSign, ArrowUpRight, Calculator, Eye, Edit3, Trash2, FileText } from 'lucide-react';
 
 export default function EmployeeDirectory({
   filteredEmployees,
@@ -19,7 +19,8 @@ export default function EmployeeDirectory({
   openEditModal,
   setDeletingEmployeeId,
   renderStatusBadge,
-  renderContractBadge
+  renderContractBadge,
+  setContractModalEmp
 }: any) {
   return (
     <>
@@ -28,7 +29,7 @@ export default function EmployeeDirectory({
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Búsqueda global (nombre, apellido, ciudad, contrato, krankenkasse, st-nummer, sv-nummer)..."
+            placeholder="Búsqueda global..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-gray-100 pl-10 pr-4 py-2.5 text-sm text-black border border-transparent focus:bg-white focus:border-black focus:outline-none transition-all"
@@ -98,9 +99,9 @@ export default function EmployeeDirectory({
                   <th className="px-4 py-3.5 text-center">Estado</th>
                   <th className="px-4 py-3.5 text-center">Contrato</th>
                   <th className="px-4 py-3.5 text-center">1er Día</th>
-                  <th className="px-4 py-3.5 text-center">Krankenkasse</th>
-                  <th className="px-4 py-3.5 text-center">Nº Fiscal (St-Nr)</th>
-                  <th className="px-4 py-3.5 text-center">Nº Seg. Social (SV)</th>
+                  <th className="px-4 py-3.5 text-center">Seguro Medico</th>
+                  <th className="px-4 py-3.5 text-center">Numero Fiscal </th>
+                  <th className="px-4 py-3.5 text-center">Numero Seg. Social</th>
                   <th className="px-4 py-3.5 text-center">Ganancias / Nómina</th>
                   <th className="px-4 py-3.5 text-center">Acciones</th>
                 </tr>
@@ -154,6 +155,9 @@ export default function EmployeeDirectory({
                           <button onClick={() => setViewingEmployee(emp)} className="p-1.5 text-gray-400 hover:text-black hover:bg-gray-100 transition-all" title="Ver Ficha">
                             <Eye className="w-4 h-4" />
                           </button>
+                          <button onClick={() => setContractModalEmp(emp)} className="p-1.5 text-emerald-800 hover:bg-emerald-50 transition-all" title="Generar Contrato Legal (PDF)">
+                            <FileText className="w-4 h-4" />
+                          </button>
                           <button onClick={() => openEditModal(emp)} className="p-1.5 text-gray-400 hover:text-black hover:bg-gray-100 transition-all" title="Editar">
                             <Edit3 className="w-4 h-4" />
                           </button>
@@ -170,7 +174,6 @@ export default function EmployeeDirectory({
           </div>
           <div className="px-6 py-3 bg-gray-50 border-t border-gray-100 text-xs text-gray-500 flex justify-between items-center font-mono">
             <span>Registros mostrados: <strong>{filteredEmployees.length}</strong> / {employees.length}</span>
-            <span>NEON DB PERSISTENT STORAGE</span>
           </div>
         </div>
       ) : (
@@ -211,6 +214,15 @@ export default function EmployeeDirectory({
                     <span>Calcular Excel</span>
                   </button>
                   <button onClick={() => setViewingEmployee(emp)} className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-xs font-bold uppercase">Ficha</button>
+                
+                    <button 
+                        onClick={() => setContractModalEmp(emp)} 
+                        className="px-3 py-2 bg-emerald-800 text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1"
+                        title="Generar Contrato"
+                        >
+                        <FileText className="w-3.5 h-3.5" />
+                        <span>Contrato</span>
+                        </button>
                 </div>
               </div>
             );

@@ -42,7 +42,6 @@ export default function EmployeeFormModal({
             <select name="contractType" required value={formData.contractType} onChange={handleFormChange} className="w-full bg-gray-100 p-3 border border-transparent focus:bg-white focus:border-black focus:outline-none">
               <option value="Minijob">Minijob</option>
               <option value="1/2 Tiempo">1/2 Tiempo (Teilzeit)</option>
-              <option value="No Aplica">No Aplica</option>
             </select>
           </div>
           <div>
@@ -54,22 +53,19 @@ export default function EmployeeFormModal({
             <input type="date" name="birthDate" required value={formData.birthDate} onChange={handleFormChange} className="w-full bg-gray-100 p-3 border border-transparent focus:bg-white focus:border-black focus:outline-none font-mono" />
           </div>
           <div>
-            <label className="block text-gray-600 mb-1">Krankenkasse *</label>
+            <label className="block text-gray-600 mb-1">Seguro Medico</label>
             <input type="text" name="krankenkasse" required value={formData.krankenkasse} onChange={handleFormChange} className="w-full bg-gray-100 p-3 border border-transparent focus:bg-white focus:border-black focus:outline-none" />
           </div>
           <div>
             <label className="block text-gray-600 mb-1">Empleo Marginal *</label>
-            <select name="marginalEmp" required value={formData.marginalEmp} onChange={handleFormChange} className="w-full bg-gray-100 p-3 border border-transparent focus:bg-white focus:border-black focus:outline-none">
-              <option value="-">-</option>
-              <option value="Knapp B-S">Knapp B-S</option>
-            </select>
+            <input type="text" name="marginalEmp" required value={formData.marginalEmp} onChange={handleFormChange} className="w-full bg-gray-100 p-3 border border-transparent focus:bg-white focus:border-black focus:outline-none font-mono" />
           </div>
           <div>
-            <label className="block text-gray-600 mb-1">St-Nummer (Fiscal) *</label>
+            <label className="block text-gray-600 mb-1">Número de identificación fiscal *</label>
             <input type="text" name="stNummer" required value={formData.stNummer} onChange={handleFormChange} className="w-full bg-gray-100 p-3 border border-transparent focus:bg-white focus:border-black focus:outline-none font-mono" />
           </div>
           <div>
-            <label className="block text-gray-600 mb-1">SV-Nummer (Seg. Social) *</label>
+            <label className="block text-gray-600 mb-1">Número de seguridad social *</label>
             <input type="text" name="svNummer" required value={formData.svNummer} onChange={handleFormChange} className="w-full bg-gray-100 p-3 border border-transparent focus:bg-white focus:border-black focus:outline-none font-mono" />
           </div>
           <div className="sm:col-span-2">
