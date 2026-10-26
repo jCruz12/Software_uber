@@ -26,36 +26,30 @@ body {
 }
 
 @media print {
-
   body * {
     visibility: hidden !important;
   }
 
-
-  #contract-document,
-  #contract-document *,
   #payroll-document,
   #payroll-document * {
     visibility: visible !important;
   }
 
-
-  #contract-document,
   #payroll-document {
     position: static !important;
     width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
     background: white !important;
+    font-size: 11px !important; 
   }
-
 
   button, .print\:hidden {
     display: none !important;
   }
 
   @page {
-    margin: 1cm;
+    margin: 0.8cm;
     size: A4 portrait;
   }
 }
